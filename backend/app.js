@@ -11,17 +11,52 @@ const routes = require('./routes');
 
 const app = express();
 
-// 配置 CORS
+// Configuration du port
+const PORT = process.env.PORT || 8001;
+
+// Configuration CORS pour permettre l'accès depuis l'app mobile
 app.use(cors({
-    origin: 'http://localhost:3000', // 允许的前端地址
-    credentials: true, // 允许跨域携带 Cookie
+    origin: function(origin, callback) {
+        // Liste des origines autorisées
+        const allowedOrigins = [
+            // URLs locales
+            `http://localhost:${PORT}`,
+            `http://10.0.2.2:${PORT}`,
+            'http://localhost:19006',  // Expo
+            'http://localhost:19000',  // Expo
+            'http://10.0.2.2:19000',  // Expo sur Android
+            'http://10.68.248.10:8081', // Votre IP Expo
+            'exp://10.68.248.10:8081', // Votre IP Expo en format exp
+            // Pour le mode tunnel
+            /^https:\/\/.*\.expo\.dev$/,     // URLs Expo tunnel
+            /^exp:\/\/.*$/                   // URLs Expo Go
+        ];
+
+        // Autoriser les requêtes sans origine (comme les apps mobiles)
+        if (!origin) return callback(null, true);
+
+        // Vérifier si l'origine est autorisée
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+            if (allowedOrigin instanceof RegExp) {
+                return allowedOrigin.test(origin);
+            }
+            return allowedOrigin === origin;
+        });
+
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.log('Origine non autorisée:', origin);
+            callback(null, true); // En développement, on autorise quand même
+        }
+    },
+    credentials: true
 }));
 
-// Synchroniser d'abord la base de données
-sequelize.sync({ force: true }).then(() => {
+// Synchronisation de la base de données
+sequelize.sync().then(() => {
     console.log('Base de données synchronisée avec succès');
     
-    // Configurer la session après la synchronisation
     const sessionStore = new SequelizeStore({
         db: sequelize,
     });
@@ -38,33 +73,38 @@ sequelize.sync({ force: true }).then(() => {
     );
 
     app.use('/static', express.static('public'));
-
     app.use(express.json());
-
-    // 中间件
     app.use(bodyParser.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
 
-    // 路由挂载
-    app.use('/auth', authRoutes);
+    // Configuration des routes
+    app.use('/api/auth', authRoutes);
     app.use('/api', routes);
 
-    // 未找到路由时处理
+    // Gestion des routes non trouvées
     app.use((req, res, next) => {
         res.status(404).json({ message: 'La ressource demandée n\'a pas été trouvée！' });
     });
 
-    // 捕获所有其他错误
+    // Gestion globale des erreurs
     app.use((err, req, res, next) => {
         console.error(err.stack);
         res.status(500).json({ message: 'Erreur interne du serveur！' });
     });
 
-    // 启动服务器
-    const PORT = 8001;
-    app.listen(PORT, () => {
-        console.log(`Le serveur est en cours d'exécution：http://localhost:${PORT}`);
+    // Démarrage du serveur
+    const server = app.listen(PORT, () => {
+        console.log(`Le serveur est en cours d'exécution sur : http://localhost:${PORT}`);
+        console.log(`Pour Android, utilisez : http://10.0.2.2:${PORT}`);
+    });
+        
+    server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
+            console.error(`Le port ${PORT} est déjà utilisé`);
+        } else {
+            console.error(`Erreur sur le port ${PORT}:`, error);
+        }
     });
 }).catch((error) => {
     console.error('Erreur lors de la synchronisation de la base de données:', error);
