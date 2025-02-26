@@ -84,6 +84,7 @@ const login = async (req, res) => {
         return res.status(200).json({
             message: 'Connexion réussie',
             user: responseUser,
+            token: token
         });
     } catch (error) {
         console.error('Erreur de connexion:', error);
