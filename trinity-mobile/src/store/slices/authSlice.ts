@@ -40,12 +40,11 @@ const authSlice = createSlice({
     },
     logout: (state) => {
       state.loading = true;
-      state.error = null;
     },
     logoutSuccess: (state) => {
-      state.loading = false;
       state.user = null;
       state.token = null;
+      state.loading = false;
       state.error = null;
     },
     logoutFailure: (state, action: PayloadAction<string>) => {

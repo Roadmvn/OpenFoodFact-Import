@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Alert,
+  Pressable,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -11,10 +13,19 @@ import { logout } from '../../store/slices/authSlice';
 
 export default function DashboardScreen() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, loading } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = () => {
-    dispatch(logout());
+    if (loading) return; // Évite les doubles clics
+    try {
+      dispatch(logout());
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la déconnexion. Veuillez réessayer.'
+      );
+    }
   };
 
   return (
@@ -23,12 +34,20 @@ export default function DashboardScreen() {
         <Text style={styles.welcomeText}>
           Bienvenue {user?.firstName || 'Admin'}
         </Text>
-        <TouchableOpacity
-          style={styles.logoutButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutButton,
+            loading && styles.disabledButton,
+            pressed && styles.pressedButton
+          ]}
           onPress={handleLogout}
+          disabled={loading}
+          android_ripple={{ color: '#ff6666' }}
         >
-          <Text style={styles.logoutButtonText}>Déconnecter</Text>
-        </TouchableOpacity>
+          <Text style={styles.logoutButtonText}>
+            {loading ? 'Déconnexion...' : 'Déconnecter'}
+          </Text>
+        </Pressable>
       </View>
 
       <Text style={styles.dashboardTitle}>Tableau de bord</Text>
@@ -51,7 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   logoutButton: {
@@ -59,13 +78,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 5,
+    elevation: 2,
+  },
+  pressedButton: {
+    backgroundColor: '#ff6666',
+    elevation: 1,
+  },
+  disabledButton: {
+    opacity: 0.7,
+    elevation: 0,
   },
   logoutButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
   dashboardTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
   },

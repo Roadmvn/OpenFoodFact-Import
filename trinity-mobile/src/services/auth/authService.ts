@@ -99,17 +99,32 @@ class AuthService {
 
   static async logout(): Promise<void> {
     try {
+      // D'abord, récupérer le token actuel
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      console.log('Token avant déconnexion:', token ? 'présent' : 'absent');
+      
+      if (token) {
+        // Configurer le header avec le token pour la requête de déconnexion
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+
       // Appel à l'API pour la déconnexion
-      const response = await axios.post(`${API_URL}/auth/logout`);
-      console.log('Réponse complète du serveur:', response);
-      console.log('Données de la réponse:', response.data);
-    } catch (error) {
-      console.error('Erreur lors de l\'appel à /auth/logout:', error);
-    } finally {
-      // Dans tous les cas, on nettoie les données locales
+      await axios.post(`${API_URL}/auth/logout`);
+      
+      // Nettoyer les données locales
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      
+      // Vérifier que le token a bien été supprimé
+      const tokenAfter = await SecureStore.getItemAsync(TOKEN_KEY);
+      console.log('Token après déconnexion:', tokenAfter ? 'toujours présent' : 'supprimé');
+      
+      // Supprimer le header d'autorisation
       delete axios.defaults.headers.common['Authorization'];
+      
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      throw error;
     }
   }
 
@@ -133,7 +148,7 @@ class AuthService {
   }
 
   static async setupAxiosInterceptors(): Promise<void> {
-    const token = await AuthService.getToken();
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }

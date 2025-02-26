@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { call, put, takeLatest, all } from 'redux-saga/effects';
+import { call, put, takeLatest } from 'redux-saga/effects';
 import AuthService from '../../services/auth/authService';
 import {
   loginFailure,
@@ -12,52 +12,51 @@ import {
   logoutSuccess,
   logoutFailure,
 } from '../slices/authSlice';
-import { LoginCredentials, RegisterCredentials, LoginResponse, RegisterResponse } from '../types/auth';
+import { LoginCredentials, RegisterCredentials } from '../types/auth';
 import Toast from 'react-native-toast-message';
+
+// Configuration des toasts
+const TOAST_DURATION = 2000; // 2 secondes au lieu de la durée par défaut
 
 function* handleLogin(action: PayloadAction<LoginCredentials>) {
   try {
-    const response: LoginResponse = yield call(AuthService.login, action.payload);
-    // S'assurer que nous avons bien un token dans la réponse
-    if (!response.token) {
-      throw new Error('Token manquant dans la réponse');
-    }
+    const response = yield call(AuthService.login, action.payload);
     yield put(loginSuccess(response));
-    // Configure les intercepteurs axios avec le nouveau token
-    yield call(AuthService.setupAxiosInterceptors);
     Toast.show({
       type: 'success',
       text1: 'Connexion réussie',
+      visibilityTime: TOAST_DURATION,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur de connexion:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
-    yield put(loginFailure(errorMessage));
+    yield put(loginFailure(error.message));
     Toast.show({
       type: 'error',
       text1: 'Erreur de connexion',
-      text2: errorMessage,
+      text2: error.message,
+      visibilityTime: TOAST_DURATION,
     });
   }
 }
 
 function* handleRegister(action: PayloadAction<RegisterCredentials>) {
   try {
-    const response: RegisterResponse = yield call(AuthService.register, action.payload);
+    yield call(AuthService.register, action.payload);
     yield put(registerSuccess());
     Toast.show({
       type: 'success',
       text1: 'Inscription réussie',
       text2: 'Vous pouvez maintenant vous connecter',
+      visibilityTime: TOAST_DURATION,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur d\'inscription:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
-    yield put(registerFailure(errorMessage));
+    yield put(registerFailure(error.message));
     Toast.show({
       type: 'error',
       text1: 'Erreur d\'inscription',
-      text2: errorMessage,
+      text2: error.message,
+      visibilityTime: TOAST_DURATION,
     });
   }
 }
@@ -69,23 +68,22 @@ function* handleLogout() {
     Toast.show({
       type: 'success',
       text1: 'Déconnexion réussie',
+      visibilityTime: TOAST_DURATION,
     });
-  } catch (error) {
-    console.error('Erreur de déconnexion:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
-    yield put(logoutFailure(errorMessage));
+  } catch (error: any) {
+    console.error('Erreur lors de la déconnexion:', error);
+    yield put(logoutFailure(error.message));
     Toast.show({
       type: 'error',
       text1: 'Erreur lors de la déconnexion',
-      text2: errorMessage,
+      text2: error.message,
+      visibilityTime: TOAST_DURATION,
     });
   }
 }
 
 export function* watchAuth() {
-  yield all([
-    takeLatest(loginRequest.type, handleLogin),
-    takeLatest(registerRequest.type, handleRegister),
-    takeLatest(logout.type, handleLogout),
-  ]);
+  yield takeLatest(loginRequest.type, handleLogin);
+  yield takeLatest(registerRequest.type, handleRegister);
+  yield takeLatest(logout.type, handleLogout);
 }
