@@ -1,32 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from './src/screens/auth/LoginScreen';
 import { store } from './src/store';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-const Stack = createNativeStackNavigator();
+import { AppNavigator } from './src/navigation/AppNavigator';
+import Toast from 'react-native-toast-message';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <NavigationContainer>
-          <Stack.Navigator 
-            initialRouteName="Login"
-            screenOptions={{
-              headerShown: false
-            }}
-          >
-            <Stack.Screen 
-              name="Login" 
-              component={LoginScreen}
-            />
-          </Stack.Navigator>
-          <StatusBar style="auto" />
-        </NavigationContainer>
+        <AppNavigator />
+        <Toast />
       </Provider>
-    </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

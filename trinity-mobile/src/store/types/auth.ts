@@ -1,14 +1,8 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
-  role: 'admin' | 'seller' | 'buyer';
-}
-
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface LoginCredentials {
@@ -17,23 +11,25 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  user: User;
   token: string;
+  user: User;
 }
 
 export interface RegisterCredentials {
-  firstName: string;
-  lastName: string;
   email: string;
   password: string;
-  phone: string;
-  address: string;
-  zipCode: string;
-  city: string;
-  country: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface RegisterResponse {
-  user: User;
   token: string;
+  user: User;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  error: string | null;
 }

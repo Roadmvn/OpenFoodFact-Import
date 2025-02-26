@@ -1,6 +1,9 @@
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 import { API_URL } from '../../config/api';
 import { LoginCredentials, LoginResponse, RegisterCredentials, RegisterResponse } from '../../store/types/auth';
+
+const TOKEN_KEY = 'auth_token';
 
 class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
@@ -40,16 +43,27 @@ class AuthService {
 
   static async logout(): Promise<void> {
     try {
-      // await SecureStore.deleteItemAsync(TOKEN_KEY);
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      if (token) {
+        // Appel à l'API de déconnexion
+        await axios.post(`${API_URL}/auth/logout`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Supprimer le token
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+      }
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+      // On supprime quand même le token en cas d'erreur
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      throw error;
     }
   }
 
   static async getToken(): Promise<string | null> {
     try {
-      // return await SecureStore.getItemAsync(TOKEN_KEY);
-      return null;
+      return await SecureStore.getItemAsync(TOKEN_KEY);
+      // return null;
     } catch (error) {
       console.error('Erreur lors de la récupération du token:', error);
       return null;
