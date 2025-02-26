@@ -1,69 +1,72 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import { Header } from '../../components/common/Header';
-import { useSelector } from 'react-redux';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import { logout } from '../../store/slices/authSlice';
 
-type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
-
-export const DashboardScreen = () => {
+export default function DashboardScreen() {
+  const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
-  const welcomeMessage = user?.firstName ? `Bienvenue ${user.firstName}` : 'Bienvenue';
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header title={welcomeMessage} />
-      <View style={styles.content}>
-        <Text style={styles.title}>Tableau de bord</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Statistiques</Text>
-          <Text style={styles.cardText}>Produits scannés : 0</Text>
-          <Text style={styles.cardText}>Produits ajoutés : 0</Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>
+          Bienvenue {user?.firstName || 'Admin'}
+        </Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>Déconnecter</Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+      <Text style={styles.dashboardTitle}>Tableau de bord</Text>
+      
+      {/* Plus tard, nous ajouterons ici la liste des produits */}
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    padding: 20,
+    backgroundColor: '#fff',
   },
-  content: {
-    flex: 1,
-    padding: 16,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
   },
-  title: {
+  welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+  },
+  logoutButton: {
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  dashboardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  cardText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
   },
 });

@@ -1,30 +1,39 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
-export type RootStackParamList = {
-  Login: undefined;
-  Dashboard: undefined;
-};
+// Screens
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import DashboardScreen from '../screens/dashboard/DashboardScreen';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator();
 
-export const AppNavigator = () => {
+export default function AppNavigator() {
   const { token } = useSelector((state: RootState) => state.auth);
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false
+        }}
+      >
         {!token ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          // Routes publiques
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+          </>
         ) : (
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          // Routes protégées
+          <>
+            <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}

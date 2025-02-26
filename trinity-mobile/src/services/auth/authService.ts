@@ -4,24 +4,47 @@ import { API_URL } from '../../config/api';
 import { LoginCredentials, LoginResponse, RegisterCredentials, RegisterResponse } from '../../store/types/auth';
 
 const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
 
 class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      console.log('Tentative de connexion avec:', credentials);
       console.log('URL de l\'API:', `${API_URL}/auth/login`);
+      console.log('Tentative de connexion avec:', credentials);
       
       const response = await axios.post(`${API_URL}/auth/login`, credentials);
-      console.log('Réponse du serveur:', response.data);
+      console.log('Réponse complète du serveur:', response);
+      console.log('Données de la réponse:', response.data);
       
-      return response.data;
+      // Vérification de la structure de la réponse
+      if (!response.data) {
+        throw new Error('Réponse vide du serveur');
+      }
+
+      // Récupération du token et de l'utilisateur avec une structure plus flexible
+      const token = response.data.token || response.data.access_token || response.data.accessToken;
+      const user = response.data.user || response.data.userData || response.data;
+
+      if (!token) {
+        console.error('Structure de la réponse:', response.data);
+        throw new Error('Token manquant dans la réponse');
+      }
+
+      // Stocker le token et l'utilisateur de manière sécurisée
+      await SecureStore.setItemAsync(TOKEN_KEY, String(token));
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+      
+      // Configure axios avec le nouveau token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      return { token, user };
     } catch (error) {
-      console.error('Erreur complète:', error);
+      console.error('Erreur complète dans AuthService.login:', error);
       if (axios.isAxiosError(error)) {
-        console.error('Détails de l\'erreur:', {
+        console.error('Détails de l\'erreur Axios:', {
+          response: error.response?.data,
           status: error.response?.status,
-          data: error.response?.data,
-          message: error.message
+          headers: error.response?.headers
         });
         throw new Error(error.response?.data?.message || 'Erreur de connexion');
       }
@@ -31,11 +54,44 @@ class AuthService {
 
   static async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
+      console.log('URL de l\'API:', `${API_URL}/auth/register`);
+      console.log('Tentative d\'inscription avec:', credentials);
+      
       const response = await axios.post(`${API_URL}/auth/register`, credentials);
-      return response.data;
+      console.log('Réponse complète du serveur:', response);
+      console.log('Données de la réponse:', response.data);
+      
+      // Vérification de la structure de la réponse
+      if (!response.data) {
+        throw new Error('Réponse vide du serveur');
+      }
+
+      // Récupération du token et de l'utilisateur avec une structure plus flexible
+      const token = response.data.token || response.data.access_token || response.data.accessToken;
+      const user = response.data.user || response.data.userData || response.data;
+
+      if (!token) {
+        console.error('Structure de la réponse:', response.data);
+        throw new Error('Token manquant dans la réponse');
+      }
+
+      // Stocker le token et l'utilisateur de manière sécurisée
+      await SecureStore.setItemAsync(TOKEN_KEY, String(token));
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+      
+      // Configure axios avec le nouveau token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      return { token, user };
     } catch (error) {
+      console.error('Erreur complète dans AuthService.register:', error);
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Erreur d\'inscription');
+        console.error('Détails de l\'erreur Axios:', {
+          response: error.response?.data,
+          status: error.response?.status,
+          headers: error.response?.headers
+        });
+        throw new Error(error.response?.data?.message || 'Erreur lors de l\'inscription');
       }
       throw error;
     }
@@ -43,51 +99,44 @@ class AuthService {
 
   static async logout(): Promise<void> {
     try {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (token) {
-        // Appel à l'API de déconnexion
-        await axios.post(`${API_URL}/auth/logout`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        // Supprimer le token
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-      }
+      // Appel à l'API pour la déconnexion
+      const response = await axios.post(`${API_URL}/auth/logout`);
+      console.log('Réponse complète du serveur:', response);
+      console.log('Données de la réponse:', response.data);
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      // On supprime quand même le token en cas d'erreur
+      console.error('Erreur lors de l\'appel à /auth/logout:', error);
+    } finally {
+      // Dans tous les cas, on nettoie les données locales
       await SecureStore.deleteItemAsync(TOKEN_KEY);
-      throw error;
+      await SecureStore.deleteItemAsync(USER_KEY);
+      delete axios.defaults.headers.common['Authorization'];
     }
   }
 
   static async getToken(): Promise<string | null> {
     try {
       return await SecureStore.getItemAsync(TOKEN_KEY);
-      // return null;
     } catch (error) {
       console.error('Erreur lors de la récupération du token:', error);
       return null;
     }
   }
 
-  // Configure axios avec le token pour toutes les requêtes
-  static async setupAxiosInterceptors() {
+  static async getUser(): Promise<any | null> {
+    try {
+      const userData = await SecureStore.getItemAsync(USER_KEY);
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+      return null;
+    }
+  }
+
+  static async setupAxiosInterceptors(): Promise<void> {
     const token = await AuthService.getToken();
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    
-    // Intercepteur pour gérer les erreurs d'authentification
-    axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401) {
-          await AuthService.logout();
-          // Vous pouvez ajouter ici la logique pour rediriger vers la page de connexion
-        }
-        return Promise.reject(error);
-      }
-    );
   }
 }
 

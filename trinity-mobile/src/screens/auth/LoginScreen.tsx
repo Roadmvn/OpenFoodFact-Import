@@ -6,89 +6,57 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginRequest, loginSuccess, loginFailure } from '../../store/slices/authSlice';
-import AuthService from '../../services/auth/authService';
-import * as SecureStore from 'expo-secure-store';
+import { loginRequest } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
-import Toast from 'react-native-toast-message';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-const TOKEN_KEY = 'auth_token';
+type LoginScreenProps = {
+  navigation: NativeStackNavigationProp<any>;
+};
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
-
-export const LoginScreen = () => {
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     if (!email || !password) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erreur',
-        text2: 'Veuillez remplir tous les champs',
-        position: 'top'
-      });
       return;
     }
-
-    try {
-      dispatch(loginRequest({ email, password }));
-      
-      const result = await AuthService.login({ email, password });
-      
-      if (result.token) {
-        await SecureStore.setItemAsync(TOKEN_KEY, result.token);
-        dispatch(loginSuccess(result));
-        navigation.replace('Dashboard');
-        Toast.show({
-          type: 'success',
-          text1: 'Connexion réussie',
-          position: 'top'
-        });
-      }
-    } catch (error: any) {
-      console.error('Erreur lors de la connexion:', error);
-      const errorMessage = error?.message || 'Une erreur est survenue';
-      dispatch(loginFailure(errorMessage));
-      Toast.show({
-        type: 'error',
-        text1: 'Erreur de connexion',
-        text2: errorMessage,
-        position: 'top'
-      });
-    }
+    dispatch(loginRequest({ email, password }));
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <View style={styles.container}>
+      <View style={styles.form}>
         <Text style={styles.title}>Connexion</Text>
+        
         <TextInput
           style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
-          autoCapitalize="none"
           keyboardType="email-address"
+          autoCapitalize="none"
+          editable={!loading}
         />
+
         <TextInput
           style={styles.input}
           placeholder="Mot de passe"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          editable={!loading}
         />
+
+        {error && <Text style={styles.error}>{error}</Text>}
+
         <TouchableOpacity 
-          style={styles.button}
+          style={[styles.button, loading && styles.buttonDisabled]} 
           onPress={handleLogin}
           disabled={loading}
         >
@@ -98,51 +66,63 @@ export const LoginScreen = () => {
             <Text style={styles.buttonText}>Se connecter</Text>
           )}
         </TouchableOpacity>
-        {error && <Text style={styles.error}>{error}</Text>}
+
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.link}>Pas encore inscrit ? Créer un compte</Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
     justifyContent: 'center',
   },
+  form: {
+    padding: 20,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 8,
     marginBottom: 15,
-    fontSize: 16,
+    paddingHorizontal: 15,
+    backgroundColor: 'white',
   },
   button: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    height: 50,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   error: {
-    color: '#dc3545',
-    marginTop: 10,
+    color: 'red',
+    marginBottom: 10,
     textAlign: 'center',
+  },
+  link: {
+    color: '#007AFF',
+    textAlign: 'center',
+    marginTop: 15,
   },
 });

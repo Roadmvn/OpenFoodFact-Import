@@ -1,8 +1,15 @@
 export interface User {
   id: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
 }
 
 export interface LoginCredentials {
@@ -18,8 +25,15 @@ export interface LoginResponse {
 export interface RegisterCredentials {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
 }
 
 export interface RegisterResponse {
