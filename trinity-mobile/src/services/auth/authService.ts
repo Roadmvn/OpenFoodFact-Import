@@ -1,22 +1,25 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
 import { API_URL } from '../../config/api';
 import { LoginCredentials, LoginResponse, RegisterCredentials, RegisterResponse } from '../../store/types/auth';
-
-const TOKEN_KEY = 'auth_token';
 
 class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
+      console.log('Tentative de connexion avec:', credentials);
+      console.log('URL de l\'API:', `${API_URL}/auth/login`);
+      
       const response = await axios.post(`${API_URL}/auth/login`, credentials);
-      const { token, user } = response.data;
+      console.log('Réponse du serveur:', response.data);
       
-      // Stocker le token de manière sécurisée
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      
-      return { token, user };
+      return response.data;
     } catch (error) {
+      console.error('Erreur complète:', error);
       if (axios.isAxiosError(error)) {
+        console.error('Détails de l\'erreur:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
         throw new Error(error.response?.data?.message || 'Erreur de connexion');
       }
       throw error;
@@ -26,15 +29,10 @@ class AuthService {
   static async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
       const response = await axios.post(`${API_URL}/auth/register`, credentials);
-      const { token, user } = response.data;
-      
-      // Stocker le token de manière sécurisée
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      
-      return { token, user };
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Erreur lors de l\'inscription');
+        throw new Error(error.response?.data?.message || 'Erreur d\'inscription');
       }
       throw error;
     }
@@ -42,7 +40,7 @@ class AuthService {
 
   static async logout(): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      // await SecureStore.deleteItemAsync(TOKEN_KEY);
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
@@ -50,7 +48,8 @@ class AuthService {
 
   static async getToken(): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(TOKEN_KEY);
+      // return await SecureStore.getItemAsync(TOKEN_KEY);
+      return null;
     } catch (error) {
       console.error('Erreur lors de la récupération du token:', error);
       return null;

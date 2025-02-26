@@ -8,20 +8,43 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginRequest } from '../../store/slices/authSlice';
+import { loginRequest, loginSuccess, loginFailure } from '../../store/slices/authSlice';
+import AuthService from '../../services/auth/authService';
+import * as SecureStore from 'expo-secure-store';
 import { RootState } from '../../store';
+import { useNavigation } from '@react-navigation/native';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       return;
     }
-    dispatch(loginRequest({ email, password }));
+
+    try {
+      console.log('Tentative de connexion...');
+      dispatch(loginRequest({ email, password }));
+      
+      const result = await AuthService.login({ email, password });
+      console.log('Résultat de la connexion:', result);
+      
+      if (result.token) {
+        await SecureStore.setItemAsync('auth_token', result.token);
+        console.log('Token stocké avec succès');
+        dispatch(loginSuccess(result));
+        // @ts-ignore
+        navigation.replace('Home');
+      }
+    } catch (error: any) {
+      console.error('Erreur lors de la connexion:', error);
+      const errorMessage = error?.message || 'Une erreur est survenue';
+      dispatch(loginFailure(errorMessage));
+    }
   };
 
   return (
@@ -51,7 +74,7 @@ export default function LoginScreen() {
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity 
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={styles.button}
           onPress={handleLogin}
           disabled={loading || !email || !password}
         >
@@ -78,38 +101,33 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
+    color: '#333',
   },
   input: {
     height: 50,
-    borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
+    borderWidth: 1,
     marginBottom: 15,
-    fontSize: 16,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
   },
   button: {
     backgroundColor: '#007AFF',
-    height: 50,
+    padding: 15,
     borderRadius: 8,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   error: {
     color: 'red',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
   },
 });
