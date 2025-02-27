@@ -1,22 +1,16 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Pressable,
-} from 'react-native';
+import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import { Button, Text, Appbar } from 'react-native-paper';
 import { logout } from '../../store/slices/authSlice';
+import { RootState } from '../../store';
 
-export default function DashboardScreen() {
+const DashboardScreen = () => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = () => {
-    if (loading) return; // Évite les doubles clics
+    if (loading) return;
     try {
       dispatch(logout());
     } catch (error) {
@@ -29,73 +23,89 @@ export default function DashboardScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          Bienvenue {user?.firstName || 'Admin'}
-        </Text>
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutButton,
-            loading && styles.disabledButton,
-            pressed && styles.pressedButton
-          ]}
+    <SafeAreaView style={styles.container}>
+      <Appbar.Header style={styles.header}>
+        <Appbar.Content title="Tableau de bord" />
+        <Appbar.Action 
+          icon="logout" 
           onPress={handleLogout}
-          disabled={loading}
-          android_ripple={{ color: '#ff6666' }}
-        >
-          <Text style={styles.logoutButtonText}>
-            {loading ? 'Déconnexion...' : 'Déconnecter'}
-          </Text>
-        </Pressable>
-      </View>
+          color="#fff"
+        />
+      </Appbar.Header>
 
-      <Text style={styles.dashboardTitle}>Tableau de bord</Text>
-      
-      {/* Plus tard, nous ajouterons ici la liste des produits */}
-    </View>
+      <View style={styles.content}>
+        {user && (
+          <View style={styles.userInfo}>
+            <Text style={styles.welcomeText}>
+              Bienvenue, {user.firstName} {user.lastName}
+            </Text>
+            <Text style={styles.roleText}>Rôle : {user.role}</Text>
+          </View>
+        )}
+
+        <View style={styles.mainContent}>
+          {/* Contenu du tableau de bord */}
+          <Text>Contenu du tableau de bord à venir...</Text>
+        </View>
+
+        <Button
+          mode="contained"
+          onPress={handleLogout}
+          style={styles.logoutButton}
+          loading={loading}
+          disabled={loading}
+        >
+          {loading ? 'Déconnexion...' : 'Se déconnecter'}
+        </Button>
+      </View>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 30,
+    elevation: 4,
   },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  content: {
+    flex: 1,
+    padding: 20,
   },
-  logoutButton: {
-    backgroundColor: '#ff4444',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 5,
-    elevation: 2,
-  },
-  pressedButton: {
-    backgroundColor: '#ff6666',
-    elevation: 1,
-  },
-  disabledButton: {
-    opacity: 0.7,
-    elevation: 0,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  dashboardTitle: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
+  },
+  userInfo: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  welcomeText: {
+    fontSize: 18,
+    marginBottom: 5,
+  },
+  roleText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: '#ff4444',
   },
 });
+
+export default DashboardScreen;
