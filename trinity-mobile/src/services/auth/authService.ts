@@ -81,7 +81,8 @@ class AuthService {
 
   static async logout() {
     try {
-      console.log('Token avant déconnexion:', await this.getToken() ? 'présent' : 'absent');
+      const token = await AuthService.getToken();
+      console.log('Token avant déconnexion:', token ? 'présent' : 'absent');
       
       // Appel à l'API pour la déconnexion
       await axios.post(`${API_URL}/auth/logout`, {}, {
@@ -90,7 +91,7 @@ class AuthService {
       
       // Nettoyer les données locales
       await SecureStore.deleteItemAsync(TOKEN_KEY);
-      console.log('Token après déconnexion:', await this.getToken() ? 'présent' : 'supprimé');
+      console.log('Token après déconnexion:', await AuthService.getToken() ? 'présent' : 'supprimé');
       
     } catch (error) {
       console.error('Erreur complète dans AuthService.logout:', error);
@@ -111,7 +112,7 @@ class AuthService {
   }
 
   static async setupAxiosInterceptors() {
-    const token = await this.getToken();
+    const token = await AuthService.getToken();
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
