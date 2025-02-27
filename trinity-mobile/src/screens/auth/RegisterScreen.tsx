@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { registerRequest } from '../../store/slices/authSlice';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootState } from '../../store';
 
 type RegisterScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -20,8 +21,13 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
   const [country, setCountry] = useState('');
   
   const dispatch = useDispatch();
+  const { loading, error, registerSuccess } = useSelector((state: RootState) => state.auth);
 
   const handleRegister = () => {
+    if (!firstName || !lastName || !email || !password) {
+      return; // Ne pas envoyer si les champs obligatoires sont vides
+    }
+    
     dispatch(registerRequest({
       firstName,
       lastName,
@@ -37,27 +43,39 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     }));
   };
 
+  useEffect(() => {
+    if (registerSuccess) {
+      // Attendre que le message de succès soit affiché avant de rediriger
+      const timer = setTimeout(() => {
+        navigation.navigate('Login');
+      }, 2000); // 2 secondes, correspondant à la durée du toast
+      return () => clearTimeout(timer);
+    }
+  }, [registerSuccess, navigation]);
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Inscription</Text>
       
+      {error && <Text style={styles.error}>{error}</Text>}
+      
       <TextInput
         style={styles.input}
-        placeholder="Prénom"
+        placeholder="Prénom *"
         value={firstName}
         onChangeText={setFirstName}
       />
       
       <TextInput
         style={styles.input}
-        placeholder="Nom"
+        placeholder="Nom *"
         value={lastName}
         onChangeText={setLastName}
       />
       
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Email *"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -66,12 +84,12 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
       
       <TextInput
         style={styles.input}
-        placeholder="Mot de passe"
+        placeholder="Mot de passe *"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-
+      
       <TextInput
         style={styles.input}
         placeholder="Téléphone"
@@ -79,29 +97,28 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         onChangeText={setPhone}
         keyboardType="phone-pad"
       />
-
+      
       <TextInput
         style={styles.input}
-        placeholder="Adresse"
+        placeholder="Rue"
         value={street}
         onChangeText={setStreet}
       />
-
+      
       <TextInput
         style={styles.input}
         placeholder="Code postal"
         value={postalCode}
         onChangeText={setPostalCode}
-        keyboardType="number-pad"
       />
-
+      
       <TextInput
         style={styles.input}
         placeholder="Ville"
         value={city}
         onChangeText={setCity}
       />
-
+      
       <TextInput
         style={styles.input}
         placeholder="Pays"
@@ -109,15 +126,21 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         onChangeText={setCountry}
       />
       
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>S'inscrire</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Inscription en cours...' : 'S\'inscrire'}
+        </Text>
       </TouchableOpacity>
-
-      {/* Message d'erreur */}
-      <Text style={styles.errorText}>L'utilisateur existe déjà !</Text>
       
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>Déjà un compte ? Se connecter</Text>
+      <TouchableOpacity
+        style={styles.linkButton}
+        onPress={() => navigation.navigate('Login')}
+      >
+        <Text style={styles.linkText}>Déjà un compte ? Se connecter</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -150,22 +173,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 20,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
-  link: {
+  linkButton: {
+    marginTop: 15,
+    padding: 10,
+  },
+  linkText: {
     color: '#007AFF',
     textAlign: 'center',
-    marginTop: 15,
-    marginBottom: 30,
   },
-  errorText: {
+  error: {
     color: 'red',
     textAlign: 'center',
-    marginTop: 10,
-  }
+    marginBottom: 15,
+  },
 });

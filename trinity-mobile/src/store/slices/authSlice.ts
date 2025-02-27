@@ -6,6 +6,7 @@ const initialState: AuthState = {
   token: null,
   loading: false,
   error: null,
+  registerSuccess: false,
 };
 
 const authSlice = createSlice({
@@ -29,14 +30,17 @@ const authSlice = createSlice({
     registerRequest: (state, action: PayloadAction<RegisterCredentials>) => {
       state.loading = true;
       state.error = null;
+      state.registerSuccess = false;
     },
     registerSuccess: (state) => {
       state.loading = false;
       state.error = null;
+      state.registerSuccess = true;
     },
     registerFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.registerSuccess = false;
     },
     logout: (state) => {
       state.loading = true;
@@ -51,6 +55,9 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    resetRegisterSuccess: (state) => {
+      state.registerSuccess = false;
+    }
   },
 });
 
@@ -64,6 +71,7 @@ export const {
   logout,
   logoutSuccess,
   logoutFailure,
+  resetRegisterSuccess,
 } = authSlice.actions;
 
 export default authSlice.reducer;

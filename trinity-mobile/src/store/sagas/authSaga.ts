@@ -15,8 +15,7 @@ import {
 import { LoginCredentials, RegisterCredentials } from '../types/auth';
 import Toast from 'react-native-toast-message';
 
-// Configuration des toasts
-const TOAST_DURATION = 2000; // 2 secondes au lieu de la durée par défaut
+const TOAST_DURATION = 2000;
 
 function* handleLogin(action: PayloadAction<LoginCredentials>) {
   try {
@@ -41,7 +40,7 @@ function* handleLogin(action: PayloadAction<LoginCredentials>) {
 
 function* handleRegister(action: PayloadAction<RegisterCredentials>) {
   try {
-    yield call(AuthService.register, action.payload);
+    const response = yield call(AuthService.register, action.payload);
     yield put(registerSuccess());
     Toast.show({
       type: 'success',
