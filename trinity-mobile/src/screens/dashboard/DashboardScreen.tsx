@@ -1,16 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Text, Appbar } from 'react-native-paper';
 import { logout } from '../../store/slices/authSlice';
-import { RootState } from '../../store';
+import { RootState } from '../../store/store';
 
-const DashboardScreen = () => {
+export const DashboardScreen = () => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = () => {
-    if (loading) return;
+    if (loading) return; // Évite les doubles clics
     try {
       dispatch(logout());
     } catch (error) {
@@ -44,7 +44,7 @@ const DashboardScreen = () => {
         )}
 
         <View style={styles.mainContent}>
-          {/* Contenu du tableau de bord */}
+          {/* Ajoutez ici le contenu principal du tableau de bord */}
           <Text>Contenu du tableau de bord à venir...</Text>
         </View>
 
@@ -61,6 +61,8 @@ const DashboardScreen = () => {
     </SafeAreaView>
   );
 };
+
+export default DashboardScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -107,5 +109,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff4444',
   },
 });
-
-export default DashboardScreen;
