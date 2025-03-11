@@ -1,1 +1,1 @@
-export { default } from "file:///mnt/c/Users/tudyg/projet/projet2/Devops_starter/front/node_modules/@nuxt/vite-builder/dist/runtime/vite-node.mjs"
+export { default } from "file:///C:/Users/tudyg/projet/OpenFoodFact-Import/front/node_modules/@nuxt/vite-builder/dist/runtime/vite-node.mjs"

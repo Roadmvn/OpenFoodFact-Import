@@ -7,12 +7,12 @@
     "module": true,
     "resourceType": "script"
   },
-  "/mnt/c/Users/tudyg/projet/projet2/Devops_starter/front/node_modules/nuxt/dist/app/entry.js": {
+  "C:/Users/tudyg/projet/OpenFoodFact-Import/front/node_modules/nuxt/dist/app/entry.js": {
     "resourceType": "script",
     "module": true,
     "prefetch": true,
     "preload": true,
     "isEntry": true,
-    "file": "/mnt/c/Users/tudyg/projet/projet2/Devops_starter/front/node_modules/nuxt/dist/app/entry.js"
+    "file": "C:/Users/tudyg/projet/OpenFoodFact-Import/front/node_modules/nuxt/dist/app/entry.js"
   }
 }

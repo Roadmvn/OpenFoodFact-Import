@@ -12,7 +12,7 @@ const routes = require('./routes');
 const app = express();
 
 // Configuration du port
-const PORT = process.env.PORT || 8001;
+const PORT = 3001;
 
 // Configuration CORS pour permettre l'accès depuis l'app mobile
 app.use(cors({
@@ -20,16 +20,17 @@ app.use(cors({
         // Liste des origines autorisées
         const allowedOrigins = [
             // URLs locales
-            `http://localhost:${PORT}`,
-            `http://10.0.2.2:${PORT}`,
+            // `http://localhost:${PORT}`,
+            // `http://10.0.2.2:${PORT}`,
             'http://localhost:19006',  // Expo
             'http://localhost:19000',  // Expo
+            'http://localhost:3000',   // Frontend React
             'http://10.0.2.2:19000',  // Expo sur Android
-            'http://10.68.248.10:8081', // Votre IP Expo
-            'exp://10.68.248.10:8081', // Votre IP Expo en format exp
+            // 'http://10.68.248.10:8081', // Votre IP Expo
+            // 'exp://10.68.248.10:8081', // Votre IP Expo en format exp
             // Pour le mode tunnel
-            /^https:\/\/.*\.expo\.dev$/,     // URLs Expo tunnel
-            /^exp:\/\/.*$/                   // URLs Expo Go
+            // /^https:\/\/.*\.expo\.dev$/,     // URLs Expo tunnel
+            // /^exp:\/\/.*$/                   // URLs Expo Go
         ];
 
         // Autoriser les requêtes sans origine (comme les apps mobiles)
@@ -79,7 +80,7 @@ sequelize.sync().then(() => {
     app.use(cookieParser());
 
     // Configuration des routes
-    app.use('/api/auth', authRoutes);
+    app.use('/auth', authRoutes);
     app.use('/api', routes);
 
     // Gestion des routes non trouvées
