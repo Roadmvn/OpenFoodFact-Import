@@ -10,6 +10,8 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 // Import de l'écran de scan
 import ScanScreen from '../screens/camera/ScanScreen';
+// Import de l'écran de détail du produit
+import ProductDetailScreen from '../screens/products/ProductDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +47,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
             {/* Ajout de l'écran de scan */}
             <Stack.Screen name="Scan" component={ScanScreen} />
+            {/* Ajout de l'écran de détail du produit */}
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

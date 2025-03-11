@@ -35,11 +35,9 @@ const ScanScreen = () => {
     // Lancer l'animation
     animateScan();
     
-    // Afficher l'alerte après un court délai pour laisser l'animation se terminer
+    // Naviguer vers l'écran de détail après un court délai pour laisser l'animation se terminer
     setTimeout(() => {
-      Alert.alert('Code-barres scanné', `Code: ${data}`, [
-        { text: 'OK', onPress: () => {} }
-      ]);
+      navigation.navigate('ProductDetail', { barcode: data });
     }, 1000);
   };
 
