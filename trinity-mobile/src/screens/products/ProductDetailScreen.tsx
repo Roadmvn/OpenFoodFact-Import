@@ -1,18 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Platform, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import ProductService, { ProductData } from '../../services/auth/product/productService';
+import CartService, { CartItem } from '../../services/cart/cartService';
+
+// Définition du type pour la navigation
+type RootStackParamList = {
+  Dashboard: undefined;
+  Scan: undefined;
+  ProductDetail: { barcode: string };
+  Cart: undefined;
+};
 
 const ProductDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
   const { barcode } = route.params as { barcode: string };
+  
+  // Fonction pour ajouter le produit au panier
+  const handleAddToCart = async () => {
+    if (product) {
+      try {
+        // Créer un objet CartItem avec les informations du produit
+        const cartItem: CartItem = {
+          barcode: barcode,
+          productName: product.product.product_name || 'Produit inconnu',
+          brand: product.product.brands || 'Marque inconnue',
+          imageUrl: product.product.image_url || '',
+          quantity: 1,
+          price: 0 // À définir plus tard si nécessaire
+        };
+        
+        // Ajouter le produit au panier
+        await CartService.addToCart(cartItem);
+        
+        // Afficher une alerte pour indiquer que le produit a été ajouté au panier
+        Alert.alert(
+          "Produit ajouté",
+          `${product.product.product_name} a été ajouté à votre panier.`,
+          [
+            { 
+              text: "Continuer mes achats", 
+              style: "cancel",
+              onPress: () => {
+                // Naviguer vers l'écran de scan pour scanner d'autres produits
+                navigation.navigate('Scan');
+              }
+            },
+            { 
+              text: "Voir mon panier", 
+              onPress: () => {
+                // Navigation vers l'écran du panier
+                navigation.navigate('Cart');
+              } 
+            }
+          ]
+        );
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout au panier:', error);
+        Alert.alert("Erreur", "Impossible d'ajouter le produit au panier.");
+      }
+    }
+  };
   
   useEffect(() => {
     const fetchProductData = async () => {
@@ -122,6 +178,7 @@ const ProductDetailScreen = () => {
           <TouchableOpacity 
             style={styles.addToCartButton}
             activeOpacity={0.8}
+            onPress={handleAddToCart}
           >
             <Ionicons name="cart" size={24} color="#FFFFFF" style={styles.cartIcon} />
             <Text style={styles.addToCartText}>Ajouter au panier</Text>

@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
+
+
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -12,6 +14,8 @@ import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import ScanScreen from '../screens/camera/ScanScreen';
 // Import de l'écran de détail du produit
 import ProductDetailScreen from '../screens/products/ProductDetailScreen';
+// Import de l'écran du panier
+import CartScreen from '../screens/cart/CartScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +53,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Scan" component={ScanScreen} />
             {/* Ajout de l'écran de détail du produit */}
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
+            {/* Ajout de l'écran du panier */}
+            <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>
