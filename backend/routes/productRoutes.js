@@ -13,6 +13,9 @@ router.get('/product/:id',authMiddleware, isSeller, ProductController.getProduct
 router.get('/products/searchProducts',authMiddleware, isSeller, ProductController.searchProducts);
 router.get('/products/getBrands',authMiddleware, isSeller, ProductController.getPaginatedUniqueBrands);
 
+// Route pour récupérer un produit par code-barres
+router.get('/product/barcode/:barcode', authMiddleware, isSeller, ProductController.getProductByBarcode);
+
 // 仅管理员操作
 router.post('/', authMiddleware, isSeller, ProductController.createProduct);
 router.put('/:id', authMiddleware, isAdmin, ProductController.updateProduct);

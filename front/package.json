@@ -24,6 +24,7 @@
     "element-plus": "^2.9.3",
     "expo-secure-store": "^14.0.1",
     "html2canvas": "^1.4.1",
+    "jsbarcode": "^3.11.6",
     "jspdf": "^2.5.2",
     "nuxt": "^3.15.4",
     "react-native-safe-area-context": "^5.2.0",

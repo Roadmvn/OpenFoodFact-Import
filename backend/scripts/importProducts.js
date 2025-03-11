@@ -38,6 +38,7 @@ const fetchAndInsertProducts = async (page = 1, retryCount = 0) => {
             try {
                 const productData = {
                     code: product.code || null,
+                    barcode: product.code || null, // Utilisation du même code comme code-barres
                     name: product.product_name || "Unknown",
                     brand: product.brands || "Unknown",
                     categories: product.categories || "Unknown",

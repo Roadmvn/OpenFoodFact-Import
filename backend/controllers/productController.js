@@ -157,6 +157,7 @@ class ProductController {
                 [Op.or]: [
                     { name: { [Op.like]: `%${q}%` } }, // 按名字模糊搜索
                     { code: { [Op.like]: `%${q}%` } }, // 或按代码模糊搜索
+                    { barcode: { [Op.like]: `%${q}%` } }, // 或按条形码模糊搜索
                 ],
             };
 
@@ -240,6 +241,37 @@ class ProductController {
         } catch (error) {
             console.error('Erreur lors de la récupération des marques uniques paginées:', error);
             return res.status(500).json({ message: 'Impossible d\'obtenir la liste des marques！' });
+        }
+    }
+
+    /**
+     * Récupérer un produit par code-barres
+     * Interface publique, pas besoin de droits d'administrateur
+     */
+    static async getProductByBarcode(req, res) {
+        try {
+            const { barcode } = req.params; // Récupérer le code-barres depuis les paramètres URL
+
+            // Chercher le produit correspondant au code-barres
+            const product = await Product.findOne({
+                where: {
+                    [Op.or]: [
+                        { barcode: barcode },
+                        { code: barcode } // Pour compatibilité avec ancien format
+                    ]
+                }
+            });
+
+            // Si aucun produit n'est trouvé, retourner un code d'état 404
+            if (!product) {
+                return res.status(404).json({ message: 'Aucun produit trouvé avec ce code-barres !' });
+            }
+
+            // Retourner les données du produit
+            res.status(200).json(product);
+        } catch (error) {
+            console.error('Erreur lors de la récupération du produit par code-barres:', error);
+            res.status(500).json({ message: 'Impossible de charger les informations du produit !' });
         }
     }
 }
