@@ -8,6 +8,8 @@ import { RootState } from '../store';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
+// Import de l'écran de scan
+import ScanScreen from '../screens/camera/ScanScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +43,8 @@ export default function AppNavigator() {
           // Routes protégées
           <>
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
+            {/* Ajout de l'écran de scan */}
+            <Stack.Screen name="Scan" component={ScanScreen} />
           </>
         )}
       </Stack.Navigator>
