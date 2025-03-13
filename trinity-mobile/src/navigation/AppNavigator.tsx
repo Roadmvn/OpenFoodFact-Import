@@ -4,8 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
-
-
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -16,6 +14,12 @@ import ScanScreen from '../screens/camera/ScanScreen';
 import ProductDetailScreen from '../screens/products/ProductDetailScreen';
 // Import de l'écran du panier
 import CartScreen from '../screens/cart/CartScreen';
+// Import de l'écran d'accessibilité
+import AccessibilityScreen from '../screens/settings/AccessibilityScreen';
+// Import de l'écran de profil
+import ProfileScreen from '../screens/profile/ProfileScreen';
+// Import de l'écran d'historique des commandes
+import OrderHistoryScreen from '../screens/orders/OrderHistoryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,27 +38,28 @@ export default function AppNavigator() {
         }}
       >
         {!token ? (
-          // Routes publiques
+          // Écrans accessibles sans authentification
           <>
             <Stack.Screen 
               name="Login" 
               component={LoginScreen}
               options={{
-                animationTypeForReplace: !token ? 'pop' : 'push',
+                animationTypeForReplace: 'pop',
               }}
             />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
           </>
         ) : (
-          // Routes protégées
+          // Écrans accessibles uniquement après authentification
           <>
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
-            {/* Ajout de l'écran de scan */}
             <Stack.Screen name="Scan" component={ScanScreen} />
-            {/* Ajout de l'écran de détail du produit */}
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
-            {/* Ajout de l'écran du panier */}
             <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+            <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
           </>
         )}
       </Stack.Navigator>

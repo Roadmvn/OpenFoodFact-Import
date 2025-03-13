@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import ProductService, { ProductData } from '../../services/auth/product/productService';
 import CartService, { CartItem } from '../../services/cart/cartService';
+import { useTheme } from '../../context/ThemeContext';
 
 // Définition du type pour la navigation
 type RootStackParamList = {
@@ -23,6 +24,14 @@ const ProductDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
   const { barcode } = route.params as { barcode: string };
+  const { theme, isColorblindMode } = useTheme();
+  
+  // Log pour déboguer le thème
+  useEffect(() => {
+    console.log('ProductDetailScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('ProductDetailScreen - Couleur primaire actuelle:', theme.primary);
+    console.log('ProductDetailScreen - Couleur d\'accent actuelle:', theme.accent);
+  }, [isColorblindMode, theme]);
   
   // Fonction pour ajouter le produit au panier
   const handleAddToCart = async () => {
@@ -90,15 +99,15 @@ const ProductDetailScreen = () => {
   
   const renderNutrientItem = (label: string, value: string | number | undefined, unit: string = '') => (
     <View style={styles.nutrientItem}>
-      <Text style={styles.nutrientLabel}>{label}</Text>
-      <Text style={styles.nutrientValue}>{value || 'N/A'} {unit}</Text>
+      <Text style={[styles.nutrientLabel, { color: theme.text }]}>{label}</Text>
+      <Text style={[styles.nutrientValue, { color: theme.textSecondary }]}>{value || 'N/A'} {unit}</Text>
     </View>
   );
   
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style="light" />
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
@@ -111,15 +120,15 @@ const ProductDetailScreen = () => {
       
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
-          <Text style={styles.loadingText}>Chargement des informations...</Text>
+          <ActivityIndicator size="large" color={theme.accent} />
+          <Text style={[styles.loadingText, { color: theme.text }]}>Chargement des informations...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={60} color="#FF5252" />
-          <Text style={styles.errorText}>{error}</Text>
+          <Ionicons name="alert-circle" size={60} color={theme.error} />
+          <Text style={[styles.errorText, { color: theme.text }]}>{error}</Text>
           <TouchableOpacity 
-            style={styles.retryButton}
+            style={[styles.retryButton, { backgroundColor: theme.accent }]}
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.retryButtonText}>Retour</Text>
@@ -127,7 +136,7 @@ const ProductDetailScreen = () => {
         </View>
       ) : product ? (
         <ScrollView style={styles.scrollView}>
-          <View style={styles.productHeader}>
+          <View style={[styles.productHeader, { backgroundColor: theme.card }]}>
             {product.product.image_url ? (
               <Image 
                 source={{ uri: product.product.image_url }} 
@@ -136,27 +145,27 @@ const ProductDetailScreen = () => {
               />
             ) : (
               <View style={styles.noImageContainer}>
-                <Ionicons name="image-outline" size={80} color="#CCCCCC" />
-                <Text style={styles.noImageText}>Aucune image</Text>
+                <Ionicons name="image-outline" size={80} color={theme.border} />
+                <Text style={[styles.noImageText, { color: theme.textSecondary }]}>Aucune image</Text>
               </View>
             )}
             
             <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.product.product_name || 'Produit inconnu'}</Text>
-              <Text style={styles.productBrand}>{product.product.brands || 'Marque inconnue'}</Text>
-              <Text style={styles.barcodeText}>Code-barres: {product.code}</Text>
+              <Text style={[styles.productName, { color: theme.text }]}>{product.product.product_name || 'Produit inconnu'}</Text>
+              <Text style={[styles.productBrand, { color: theme.textSecondary }]}>{product.product.brands || 'Marque inconnue'}</Text>
+              <Text style={[styles.barcodeText, { color: theme.textSecondary }]}>Code-barres: {product.code}</Text>
             </View>
           </View>
           
           {product.product.nutriscore_grade && (
-            <View style={styles.scoreContainer}>
-              <Text style={styles.scoreTitle}>Nutriscore</Text>
-              <Text style={styles.scoreValue}>{product.product.nutriscore_grade.toUpperCase()}</Text>
+            <View style={[styles.scoreContainer, { backgroundColor: theme.card }]}>
+              <Text style={[styles.scoreTitle, { color: theme.text }]}>Nutriscore</Text>
+              <Text style={[styles.scoreValue, { color: theme.accent }]}>{product.product.nutriscore_grade.toUpperCase()}</Text>
             </View>
           )}
           
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Valeurs nutritionnelles (pour 100g)</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: theme.card }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Valeurs nutritionnelles (pour 100g)</Text>
             <View style={styles.nutrientsContainer}>
               {renderNutrientItem('Énergie', product.product.nutriments.energy_100g, 'kcal')}
               {renderNutrientItem('Matières grasses', product.product.nutriments.fat_100g, 'g')}
@@ -169,14 +178,14 @@ const ProductDetailScreen = () => {
           </View>
           
           {product.product.ingredients_text && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Ingrédients</Text>
-              <Text style={styles.ingredientsText}>{product.product.ingredients_text}</Text>
+            <View style={[styles.sectionContainer, { backgroundColor: theme.card }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Ingrédients</Text>
+              <Text style={[styles.ingredientsText, { color: theme.textSecondary }]}>{product.product.ingredients_text}</Text>
             </View>
           )}
           
           <TouchableOpacity 
-            style={styles.addToCartButton}
+            style={[styles.addToCartButton, { backgroundColor: theme.accent }]}
             activeOpacity={0.8}
             onPress={handleAddToCart}
           >
@@ -186,14 +195,8 @@ const ProductDetailScreen = () => {
         </ScrollView>
       ) : (
         <View style={styles.errorContainer}>
-          <Ionicons name="help-circle" size={60} color="#FF9800" />
-          <Text style={styles.errorText}>Aucune information disponible</Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.retryButtonText}>Retour</Text>
-          </TouchableOpacity>
+          <Ionicons name="help-circle" size={60} color={theme.accent} />
+          <Text style={[styles.errorText, { color: theme.text }]}>Aucune information disponible pour ce produit.</Text>
         </View>
       )}
     </View>
@@ -203,13 +206,11 @@ const ProductDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#2A2E45',
     paddingTop: Platform.OS === 'android' ? 40 : 15,
     elevation: 4,
     shadowColor: '#000',
@@ -238,7 +239,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: '#666',
   },
   errorContainer: {
     flex: 1,
@@ -249,14 +249,12 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: 15,
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
   },
   retryButton: {
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#3E437A',
     borderRadius: 8,
   },
   retryButtonText: {
@@ -267,7 +265,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productHeader: {
-    backgroundColor: '#fff',
     padding: 15,
     marginBottom: 10,
   },
@@ -281,12 +278,10 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
     marginBottom: 15,
   },
   noImageText: {
     marginTop: 10,
-    color: '#999',
   },
   productInfo: {
     paddingHorizontal: 10,
@@ -295,19 +290,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#2A2E45',
   },
   productBrand: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 10,
   },
   barcodeText: {
     fontSize: 14,
-    color: '#999',
   },
   scoreContainer: {
-    backgroundColor: '#fff',
     padding: 15,
     marginBottom: 10,
     alignItems: 'center',
@@ -316,15 +307,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#2A2E45',
   },
   scoreValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#3E437A',
   },
   sectionContainer: {
-    backgroundColor: '#fff',
     padding: 15,
     marginBottom: 10,
   },
@@ -332,7 +320,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#2A2E45',
   },
   nutrientsContainer: {
     borderTopWidth: 1,
@@ -347,20 +334,16 @@ const styles = StyleSheet.create({
   },
   nutrientLabel: {
     fontSize: 14,
-    color: '#333',
   },
   nutrientValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
   },
   ingredientsText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#333',
   },
   addToCartButton: {
-    backgroundColor: '#4CAF50',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -377,7 +360,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   addToCartText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },

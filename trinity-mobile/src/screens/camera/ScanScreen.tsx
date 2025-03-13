@@ -1,15 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 const ScanScreen = () => {
   const [manualBarcode, setManualBarcode] = useState('');
   const [scanning, setScanning] = useState(false);
   const navigation = useNavigation();
   const scanAnimation = useRef(new Animated.Value(0)).current;
+  const { theme, isColorblindMode } = useTheme();
+
+  // Log pour déboguer le thème
+  useEffect(() => {
+    console.log('ScanScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('ScanScreen - Couleur primaire actuelle:', theme.primary);
+    console.log('ScanScreen - Couleur d\'accent actuelle:', theme.accent);
+  }, [isColorblindMode, theme]);
 
   const animateScan = () => {
     setScanning(true);
@@ -52,9 +61,9 @@ const ScanScreen = () => {
 
   // Mode simulation
   return (
-    <SafeAreaView style={styles.simulationContainer}>
+    <SafeAreaView style={[styles.simulationContainer, { backgroundColor: theme.background }]}>
       <StatusBar style="light" />
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
@@ -66,15 +75,16 @@ const ScanScreen = () => {
       </View>
       
       <View style={styles.simulationContent}>
-        <Text style={styles.simulationText}>
+        <Text style={[styles.simulationText, { color: theme.text }]}>
           Mode simulation activé. Veuillez entrer un code-barres manuellement.
         </Text>
         
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: theme.border, color: theme.text }]}
           value={manualBarcode}
           onChangeText={setManualBarcode}
           placeholder="Entrez un code-barres (ex: 3017620422003)"
+          placeholderTextColor={theme.textSecondary}
           keyboardType="numeric"
           maxLength={13}
         />
@@ -82,7 +92,8 @@ const ScanScreen = () => {
         <Button 
           mode="contained" 
           onPress={handleManualSubmit}
-          style={styles.button}
+          style={[styles.button, { backgroundColor: theme.accent }]}
+          color={theme.accent}
           loading={scanning}
           disabled={scanning}
         >
@@ -106,20 +117,20 @@ const ScanScreen = () => {
               }
             ]}
           >
-            <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
+            <Ionicons name="checkmark-circle" size={60} color={theme.accent} />
           </Animated.View>
         )}
         
-        <View style={styles.examplesContainer}>
-          <Text style={styles.examplesTitle}>Exemples de codes-barres:</Text>
+        <View style={[styles.examplesContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.examplesTitle, { color: theme.text }]}>Exemples de codes-barres:</Text>
           <TouchableOpacity onPress={() => setManualBarcode('3017620422003')}>
-            <Text style={styles.exampleItem}>3017620422003 (Nutella)</Text>
+            <Text style={[styles.exampleItem, { color: theme.secondary }]}>3017620422003 (Nutella)</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setManualBarcode('3017620425035')}>
-            <Text style={styles.exampleItem}>3017620425035 (Nutella B-ready)</Text>
+            <Text style={[styles.exampleItem, { color: theme.secondary }]}>3017620425035 (Nutella B-ready)</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setManualBarcode('3046920022651')}>
-            <Text style={styles.exampleItem}>3046920022651 (Lindt Excellence)</Text>
+            <Text style={[styles.exampleItem, { color: theme.secondary }]}>3046920022651 (Lindt Excellence)</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -132,13 +143,11 @@ export default ScanScreen;
 const styles = StyleSheet.create({
   simulationContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#2196F3',
     paddingTop: Platform.OS === 'android' ? 40 : 15,
     elevation: 4,
     shadowColor: '#000',
@@ -149,69 +158,35 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 20,
-    marginRight: 10,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginRight: 15,
   },
   headerTitle: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-    marginRight: 40, // Pour équilibrer avec le bouton de retour
+    marginLeft: 10,
   },
   simulationContent: {
     flex: 1,
     padding: 20,
-    alignItems: 'center',
   },
   simulationText: {
     fontSize: 16,
-    textAlign: 'center',
     marginBottom: 20,
-    color: '#333',
+    textAlign: 'center',
   },
   input: {
-    width: '100%',
     height: 50,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 15,
-    fontSize: 16,
-    backgroundColor: '#fff',
     marginBottom: 20,
+    backgroundColor: 'white',
   },
   button: {
-    width: '100%',
-    marginVertical: 10,
-    paddingVertical: 8,
-    backgroundColor: '#4CAF50',
-  },
-  examplesContainer: {
-    width: '100%',
-    marginTop: 30,
-    padding: 15,
-    backgroundColor: '#fff',
+    marginBottom: 30,
     borderRadius: 8,
-    elevation: 2,
-  },
-  examplesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  exampleItem: {
-    fontSize: 14,
-    color: '#2196F3',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    height: 50,
+    justifyContent: 'center',
   },
   scanAnimation: {
     position: 'absolute',
@@ -219,6 +194,22 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -30,
     marginTop: -30,
-    zIndex: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  examplesContainer: {
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
+  },
+  examplesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  exampleItem: {
+    fontSize: 14,
+    paddingVertical: 8,
   },
 });

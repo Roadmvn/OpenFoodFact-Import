@@ -1,15 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Text, Appbar, FAB } from 'react-native-paper';
 import { logout } from '../../store/slices/authSlice';
-import { RootState } from '../../store/store';
+import { RootState } from '../../store/index';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 const DashboardScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.auth.user);
+  const { theme, isColorblindMode } = useTheme();
+  
+  // Log pour déboguer le thème
+  useEffect(() => {
+    console.log('DashboardScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('DashboardScreen - Couleur primaire actuelle:', theme.primary);
+    console.log('DashboardScreen - Couleur d\'accent actuelle:', theme.accent);
+  }, [isColorblindMode, theme]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -37,40 +46,55 @@ const DashboardScreen = () => {
     navigation.navigate('Scan' as never);
   };
 
+  const handleProfilePress = () => {
+    navigation.navigate('Profile' as never);
+  };
+
+  const handleAccessibilityPress = () => {
+    navigation.navigate('Accessibility' as never);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Appbar.Header style={styles.header}>
-        <Appbar.Content title="Trinity" subtitle="Dashboard" />
-        <Appbar.Action icon="logout" onPress={handleLogout} />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <Appbar.Header style={[styles.header, { backgroundColor: theme.primary }]}>
+        <Appbar.Content 
+          title="Trinity" 
+          subtitle="Dashboard" 
+          titleStyle={{ color: '#FFFFFF' }}
+          subtitleStyle={{ color: '#FFFFFF' }}
+        />
+        <Appbar.Action icon="account" onPress={handleProfilePress} color="#FFFFFF" />
+        <Appbar.Action icon="eye" onPress={handleAccessibilityPress} color="#FFFFFF" />
+        <Appbar.Action icon="logout" onPress={handleLogout} color="#FFFFFF" />
       </Appbar.Header>
 
       <View style={styles.content}>
         {user ? (
-          <View style={styles.userInfoContainer}>
-            <Text style={styles.welcomeText}>Bienvenue, {user.username}</Text>
-            <Text style={styles.emailText}>{user.email}</Text>
-            
+          <View style={[styles.userInfoContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.welcomeText, { color: theme.text }]}>Bienvenue, {user.username}</Text>
+            <Text style={[styles.emailText, { color: theme.textSecondary }]}>{user.email}</Text>
+
             <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>0</Text>
-                <Text style={styles.statLabel}>Produits scannés</Text>
+              <View style={[styles.statBox, { backgroundColor: theme.background }]}>
+                <Text style={[styles.statNumber, { color: theme.primary }]}>0</Text>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Produits scannés</Text>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>0</Text>
-                <Text style={styles.statLabel}>Favoris</Text>
+              <View style={[styles.statBox, { backgroundColor: theme.background }]}>
+                <Text style={[styles.statNumber, { color: theme.primary }]}>0</Text>
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Favoris</Text>
               </View>
             </View>
           </View>
         ) : (
-          <Text style={styles.noUserText}>Non connecté</Text>
+          <Text style={[styles.errorText, { color: theme.error }]}>Utilisateur non connecté</Text>
         )}
       </View>
 
       <FAB
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.accent }]}
         icon="barcode-scan"
         onPress={handleScanPress}
-        label="Scanner"
+        color="#FFFFFF"
       />
     </SafeAreaView>
   );
@@ -81,72 +105,56 @@ export default DashboardScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#2196F3',
+    elevation: 4,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   userInfoContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 20,
   },
   welcomeText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
+    marginBottom: 4,
   },
   emailText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
+    fontSize: 14,
+    marginBottom: 16,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
+    justifyContent: 'space-between',
   },
-  statItem: {
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#f0f8ff',
+  statBox: {
+    flex: 1,
+    padding: 12,
     borderRadius: 8,
-    width: '45%',
+    alignItems: 'center',
+    marginHorizontal: 4,
   },
-  statValue: {
+  statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2196F3',
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
+    fontSize: 12,
   },
-  noUserText: {
-    fontSize: 18,
+  errorText: {
+    fontSize: 16,
     textAlign: 'center',
-    marginTop: 20,
-    color: '#999',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#4CAF50',
   },
 });
