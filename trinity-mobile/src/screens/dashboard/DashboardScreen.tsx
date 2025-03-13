@@ -1,24 +1,26 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Alert, StatusBar, TouchableOpacity, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Text, Appbar, FAB } from 'react-native-paper';
+import { Button, Text, Appbar, FAB, Avatar, IconButton } from 'react-native-paper';
 import { logout } from '../../store/slices/authSlice';
 import { RootState } from '../../store/index';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 
 const DashboardScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.auth.user);
-  const { theme, isColorblindMode } = useTheme();
+  const { theme, colorBlindMode } = useTheme();
   
   // Log pour déboguer le thème
   useEffect(() => {
-    console.log('DashboardScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('DashboardScreen - Mode daltonien actif:', colorBlindMode);
     console.log('DashboardScreen - Couleur primaire actuelle:', theme.primary);
     console.log('DashboardScreen - Couleur d\'accent actuelle:', theme.accent);
-  }, [isColorblindMode, theme]);
+  }, [colorBlindMode, theme]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -54,48 +56,172 @@ const DashboardScreen = () => {
     navigation.navigate('Accessibility' as never);
   };
 
+  // Fonction pour obtenir les initiales de l'utilisateur
+  const getUserInitials = () => {
+    if (!user) return '';
+    return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase() || user.username.substring(0, 2).toUpperCase();
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <Appbar.Header style={[styles.header, { backgroundColor: theme.primary }]}>
-        <Appbar.Content 
-          title="Trinity" 
-          subtitle="Dashboard" 
-          titleStyle={{ color: '#FFFFFF' }}
-          subtitleStyle={{ color: '#FFFFFF' }}
-        />
-        <Appbar.Action icon="account" onPress={handleProfilePress} color="#FFFFFF" />
-        <Appbar.Action icon="eye" onPress={handleAccessibilityPress} color="#FFFFFF" />
-        <Appbar.Action icon="logout" onPress={handleLogout} color="#FFFFFF" />
-      </Appbar.Header>
-
-      <View style={styles.content}>
-        {user ? (
-          <View style={[styles.userInfoContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Text style={[styles.welcomeText, { color: theme.text }]}>Bienvenue, {user.username}</Text>
-            <Text style={[styles.emailText, { color: theme.textSecondary }]}>{user.email}</Text>
-
-            <View style={styles.statsContainer}>
-              <View style={[styles.statBox, { backgroundColor: theme.background }]}>
-                <Text style={[styles.statNumber, { color: theme.primary }]}>0</Text>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Produits scannés</Text>
-              </View>
-              <View style={[styles.statBox, { backgroundColor: theme.background }]}>
-                <Text style={[styles.statNumber, { color: theme.primary }]}>0</Text>
-                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Favoris</Text>
-              </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor={theme.headerBackground} barStyle="light-content" />
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        {/* Header amélioré avec des boutons plus distincts */}
+        <View style={[styles.headerContainer, { backgroundColor: theme.headerBackground }]}>
+          <View style={styles.headerContent}>
+            <View style={styles.titleContainer}>
+              <Text style={[styles.titleText, { color: theme.headerText }]}>Trinity</Text>
+              <Text style={[styles.subtitleText, { color: theme.headerText }]}>Dashboard</Text>
+            </View>
+            
+            <View style={styles.headerButtons}>
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={handleProfilePress}
+                accessibilityLabel="Profil"
+                accessibilityHint="Accéder à votre profil utilisateur"
+              >
+                <LinearGradient
+                  colors={theme.accentGradient}
+                  style={styles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <IconButton icon="account" color="#FFFFFF" size={24} />
+                </LinearGradient>
+                <Text style={[styles.buttonLabel, { color: theme.text }]}>Profil</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => navigation.navigate('Accessibility' as never)}
+                accessibilityLabel="Paramètres d'accessibilité"
+                accessibilityHint="Ouvrir les paramètres d'accessibilité"
+              >
+                <LinearGradient
+                  colors={theme.accentGradient}
+                  style={styles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <IconButton icon="eye-settings" color="#FFFFFF" size={24} />
+                </LinearGradient>
+                <Text style={[styles.buttonLabel, { color: theme.text }]}>Accessibilité</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={handleLogout}
+                accessibilityLabel="Déconnexion"
+                accessibilityHint="Se déconnecter de l'application"
+              >
+                <LinearGradient
+                  colors={theme.accentGradient}
+                  style={styles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <IconButton icon="logout" color="#FFFFFF" size={24} />
+                </LinearGradient>
+                <Text style={[styles.buttonLabel, { color: theme.text }]}>Déconnexion</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        ) : (
-          <Text style={[styles.errorText, { color: theme.error }]}>Utilisateur non connecté</Text>
-        )}
-      </View>
+        </View>
 
-      <FAB
-        style={[styles.fab, { backgroundColor: theme.accent }]}
-        icon="barcode-scan"
-        onPress={handleScanPress}
-        color="#FFFFFF"
-      />
+        <View style={styles.content}>
+          {user ? (
+            <Animatable.View 
+              animation="fadeIn" 
+              duration={800} 
+              style={[styles.userInfoContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
+            >
+              <View style={styles.userHeaderContainer}>
+                <LinearGradient
+                  colors={theme.cardGradient}
+                  style={styles.avatarContainer}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Avatar.Text 
+                    size={60} 
+                    label={getUserInitials()} 
+                    style={styles.avatar}
+                    color="#FFFFFF"
+                    labelStyle={{ fontWeight: 'bold' }}
+                  />
+                </LinearGradient>
+                <View style={styles.userTextContainer}>
+                  <Text style={[styles.welcomeText, { color: theme.text }]}>Bienvenue, {user.username}</Text>
+                  <Text style={[styles.emailText, { color: theme.textSecondary }]}>{user.email}</Text>
+                </View>
+              </View>
+
+              <Animatable.View 
+                animation="fadeInUp" 
+                duration={800} 
+                delay={300}
+                style={styles.statsContainer}
+              >
+                <Animatable.View 
+                  animation="zoomIn" 
+                  duration={800} 
+                  delay={500}
+                  style={[styles.statBox, { backgroundColor: theme.background }]}
+                >
+                  <LinearGradient
+                    colors={theme.cardGradient}
+                    style={styles.statCircle}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.statNumber}>0</Text>
+                  </LinearGradient>
+                  <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Produits scannés</Text>
+                </Animatable.View>
+                
+                <Animatable.View 
+                  animation="zoomIn" 
+                  duration={800} 
+                  delay={700}
+                  style={[styles.statBox, { backgroundColor: theme.background }]}
+                >
+                  <LinearGradient
+                    colors={theme.cardGradient}
+                    style={styles.statCircle}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.statNumber}>0</Text>
+                  </LinearGradient>
+                  <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Favoris</Text>
+                </Animatable.View>
+              </Animatable.View>
+            </Animatable.View>
+          ) : (
+            <Text style={[styles.errorText, { color: theme.error }]}>Utilisateur non connecté</Text>
+          )}
+        </View>
+
+        <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
+          <TouchableOpacity
+            style={styles.fabContainer}
+            onPress={handleScanPress}
+            accessibilityLabel="Scanner un produit"
+            accessibilityHint="Ouvrir la caméra pour scanner un code-barres"
+          >
+            <LinearGradient
+              colors={theme.accentGradient}
+              style={styles.fab}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <IconButton icon="barcode-scan" color="#FFFFFF" size={30} />
+            </LinearGradient>
+            <Text style={styles.fabLabel}>Scanner</Text>
+          </TouchableOpacity>
+        </Animatable.View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -103,11 +229,52 @@ const DashboardScreen = () => {
 export default DashboardScreen;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  header: {
+  headerContainer: {
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingBottom: 10,
     elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  headerContent: {
+    padding: 16,
+  },
+  titleContainer: {
+    marginBottom: 16,
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  subtitleText: {
+    fontSize: 16,
+    opacity: 0.8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  headerButton: {
+    alignItems: 'center',
+    width: 90,
+  },
+  buttonGradient: {
+    borderRadius: 25,
+    padding: 5,
+    marginBottom: 5,
+  },
+  buttonLabel: {
+    fontSize: 12,
+    marginTop: 4,
   },
   content: {
     flex: 1,
@@ -115,9 +282,26 @@ const styles = StyleSheet.create({
   },
   userInfoContainer: {
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 20,
+    elevation: 3,
+  },
+  userHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatarContainer: {
+    borderRadius: 30,
+    padding: 3,
+  },
+  avatar: {
+    backgroundColor: 'transparent',
+  },
+  userTextContainer: {
+    marginLeft: 16,
+    flex: 1,
   },
   welcomeText: {
     fontSize: 20,
@@ -126,7 +310,7 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -135,26 +319,54 @@ const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginHorizontal: 4,
+    elevation: 2,
+  },
+  statCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    color: '#FFFFFF',
   },
   statLabel: {
     fontSize: 12,
+    textAlign: 'center',
   },
   errorText: {
     fontSize: 16,
     textAlign: 'center',
   },
-  fab: {
+  fabContainer: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
+    right: 20,
+    bottom: 20,
+    alignItems: 'center',
+  },
+  fab: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  fabLabel: {
+    marginTop: 5,
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });

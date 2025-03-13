@@ -1,6 +1,7 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { call, put, takeLatest } from 'redux-saga/effects';
 import AuthService from '../../services/auth/authService';
+import UserService from '../../services/user/userService';
 import {
   loginFailure,
   loginRequest,
@@ -11,13 +12,16 @@ import {
   logout,
   logoutSuccess,
   logoutFailure,
+  updateProfileRequest,
+  updateProfileSuccess,
+  updateProfileFailure,
 } from '../slices/authSlice';
-import { LoginCredentials, RegisterCredentials } from '../types/auth';
+import { LoginCredentials, RegisterCredentials, UpdateUserProfileRequest } from '../types/auth';
 import Toast from 'react-native-toast-message';
 
 const TOAST_DURATION = 2000;
 
-function* handleLogin(action: PayloadAction<LoginCredentials>) {
+function* handleLogin(action: PayloadAction<LoginCredentials>): Generator<any, void, any> {
   try {
     const response = yield call(AuthService.login, action.payload);
     yield put(loginSuccess(response));
@@ -38,7 +42,7 @@ function* handleLogin(action: PayloadAction<LoginCredentials>) {
   }
 }
 
-function* handleRegister(action: PayloadAction<RegisterCredentials>) {
+function* handleRegister(action: PayloadAction<RegisterCredentials>): Generator<any, void, any> {
   try {
     const response = yield call(AuthService.register, action.payload);
     yield put(registerSuccess());
@@ -60,7 +64,7 @@ function* handleRegister(action: PayloadAction<RegisterCredentials>) {
   }
 }
 
-function* handleLogout() {
+function* handleLogout(): Generator<any, void, any> {
   try {
     yield call(AuthService.logout);
     yield put(logoutSuccess());
@@ -81,8 +85,37 @@ function* handleLogout() {
   }
 }
 
-export function* watchAuth() {
+function* handleUpdateProfile(action: PayloadAction<UpdateUserProfileRequest>): Generator<any, void, any> {
+  try {
+    console.log('AuthSaga: Starting profile update', action.payload);
+    const user = yield call(UserService.updateUserProfile as any, action.payload);
+    console.log('AuthSaga: Profile update successful', user);
+    yield put(updateProfileSuccess(user));
+    Toast.show({
+      type: 'success',
+      text1: 'Profil mis à jour',
+      text2: 'Vos informations ont été mises à jour avec succès',
+      visibilityTime: TOAST_DURATION,
+    });
+  } catch (error: any) {
+    console.error('AuthSaga: Profile update failed', error);
+    yield put(updateProfileFailure(error.message));
+    Toast.show({
+      type: 'error',
+      text1: 'Erreur de mise à jour',
+      text2: error.message,
+      visibilityTime: TOAST_DURATION,
+    });
+  }
+}
+
+// Renommer la fonction pour correspondre à ce qui est attendu dans le store
+export function* watchAuth(): Generator<any, void, any> {
   yield takeLatest(loginRequest.type, handleLogin);
   yield takeLatest(registerRequest.type, handleRegister);
   yield takeLatest(logout.type, handleLogout);
+  yield takeLatest(updateProfileRequest.type, handleUpdateProfile);
 }
+
+// Garder authSaga comme alias pour la compatibilité
+export const authSaga = watchAuth;

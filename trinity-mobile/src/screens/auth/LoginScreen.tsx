@@ -14,6 +14,7 @@ import { RootState } from '../../store';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -24,14 +25,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
-  const { theme, isColorblindMode } = useTheme();
+  const { theme, colorBlindMode } = useTheme();
 
   // Log pour déboguer le thème
   useEffect(() => {
-    console.log('LoginScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('LoginScreen - Mode daltonien actif:', colorBlindMode);
     console.log('LoginScreen - Couleur primaire actuelle:', theme.primary);
     console.log('LoginScreen - Couleur d\'accent actuelle:', theme.accent);
-  }, [isColorblindMode, theme]);
+  }, [colorBlindMode, theme]);
 
   const handleLogin = () => {
     if (!email || !password) {
@@ -44,9 +45,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     navigation.navigate('Accessibility');
   };
 
-  // Déterminer la couleur du bouton de connexion en fonction du mode
-  const loginButtonColor = isColorblindMode ? theme.accent : '#0D8AF0';
-
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <TouchableOpacity 
@@ -54,12 +52,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         onPress={handleAccessibilityPress}
         accessibilityLabel="Paramètres d'accessibilité"
       >
-        <Ionicons name="eye-outline" size={24} color={theme.secondary} />
-        <Text style={[styles.accessibilityText, { color: theme.secondary }]}>Accessibilité</Text>
+        <Ionicons name="eye-outline" size={24} color={theme.primary} />
+        <Text style={[styles.accessibilityText, { color: theme.primary }]}>Accessibilité</Text>
       </TouchableOpacity>
 
       <View style={styles.form}>
-        <Text style={[styles.title, { color: '#000000' }]}>Connexion</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Connexion</Text>
         
         <TextInput
           style={[styles.input, { borderColor: theme.border, color: theme.text }]}
@@ -85,15 +83,22 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         {error && <Text style={[styles.error, { color: theme.error }]}>{error}</Text>}
 
         <TouchableOpacity 
-          style={[styles.button, { backgroundColor: loginButtonColor }, loading && styles.buttonDisabled]} 
+          style={[styles.button, loading && styles.buttonDisabled]} 
           onPress={handleLogin}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Se connecter</Text>
-          )}
+          <LinearGradient
+            colors={theme.buttonGradient}
+            style={styles.buttonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Se connecter</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -129,9 +134,19 @@ const styles = StyleSheet.create({
   button: {
     height: 50,
     borderRadius: 8,
+    marginTop: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  buttonGradient: {
+    height: '100%',
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
   },
   buttonDisabled: {
     opacity: 0.7,

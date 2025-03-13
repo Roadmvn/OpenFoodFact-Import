@@ -47,3 +47,19 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
 }
+
+export interface UpdateUserProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    postalCode?: string;
+    city?: string;
+    country?: string;
+  };
+}
+
+export interface UpdateUserProfileResponse {
+  user: User;
+}

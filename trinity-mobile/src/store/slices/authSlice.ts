@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, LoginCredentials, LoginResponse, RegisterCredentials } from '../types/auth';
+import { AuthState, LoginCredentials, LoginResponse, RegisterCredentials, UpdateUserProfileRequest, User } from '../types/auth';
 
 const initialState: AuthState = {
   user: null,
@@ -57,7 +57,20 @@ const authSlice = createSlice({
     },
     resetRegisterSuccess: (state) => {
       state.registerSuccess = false;
-    }
+    },
+    updateProfileRequest: (state, action: PayloadAction<UpdateUserProfileRequest>) => {
+      state.loading = true;
+      state.error = null;
+    },
+    updateProfileSuccess: (state, action: PayloadAction<User>) => {
+      state.loading = false;
+      state.user = action.payload;
+      state.error = null;
+    },
+    updateProfileFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -72,6 +85,9 @@ export const {
   logoutSuccess,
   logoutFailure,
   resetRegisterSuccess,
+  updateProfileRequest,
+  updateProfileSuccess,
+  updateProfileFailure,
 } = authSlice.actions;
 
 export default authSlice.reducer;
