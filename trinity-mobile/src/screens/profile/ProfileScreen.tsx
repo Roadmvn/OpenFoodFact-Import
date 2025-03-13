@@ -24,7 +24,7 @@ const ProfileScreen = () => {
   const [phone, setPhone] = useState(user?.phone || '');
   
   // États pour les champs d'adresse (à plat, comme attendu par le backend)
-  const [street, setStreet] = useState(user?.street || '');
+  const [street, setStreet] = useState(user?.address || '');
   const [postalCode, setPostalCode] = useState(user?.zipCode || user?.postalCode || '');
   const [city, setCity] = useState(user?.city || '');
   const [country, setCountry] = useState(user?.country || '');
@@ -46,12 +46,12 @@ const ProfileScreen = () => {
       
       // Mise à jour des champs d'adresse (à plat)
       console.log('ProfileScreen: Updating address fields', {
-        street: user.street,
+        street: user.address,
         postalCode: user.zipCode || user.postalCode,
         city: user.city,
         country: user.country
       });
-      setStreet(user.street || '');
+      setStreet(user.address || '');
       setPostalCode(user.zipCode || user.postalCode || '');
       setCity(user.city || '');
       setCountry(user.country || '');
@@ -123,7 +123,7 @@ const ProfileScreen = () => {
       firstName,
       lastName,
       phone,
-      street,
+      address: street,
       postalCode,
       city,
       country
@@ -144,7 +144,7 @@ const ProfileScreen = () => {
       
       // Réinitialisation des champs d'adresse (à plat)
       console.log('ProfileScreen: Resetting address fields');
-      setStreet(user.street || '');
+      setStreet(user.address || '');
       setPostalCode(user.zipCode || user.postalCode || '');
       setCity(user.city || '');
       setCountry(user.country || '');
@@ -338,7 +338,7 @@ const ProfileScreen = () => {
                     <>
                       <Animatable.View animation="fadeIn" duration={500}>
                         <TextInput
-                          label="Rue"
+                          label="Adresse"
                           value={street}
                           onChangeText={setStreet}
                           style={styles.input}
@@ -346,8 +346,8 @@ const ProfileScreen = () => {
                           outlineColor={theme.border}
                           activeOutlineColor={theme.primary}
                           disabled={loading}
-                          accessibilityLabel="Rue"
-                          accessibilityHint="Entrez votre rue"
+                          accessibilityLabel="Adresse"
+                          accessibilityHint="Entrez votre adresse"
                         />
                       </Animatable.View>
                       
@@ -401,7 +401,7 @@ const ProfileScreen = () => {
                   ) : (
                     <>
                       <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Rue:</Text>
+                        <Text style={styles.infoLabel}>Adresse:</Text>
                         <Text style={styles.infoValue}>{street || 'Non renseignée'}</Text>
                       </View>
                       
@@ -471,7 +471,7 @@ const ProfileScreen = () => {
                   >
                     <TouchableOpacity 
                       style={styles.historyButton}
-                      onPress={() => navigation.navigate('PurchaseHistory' as never)}
+                      onPress={() => navigation.navigate('OrderHistory' as never)}
                       activeOpacity={0.8}
                       accessibilityLabel="Voir l'historique des achats"
                       accessibilityHint="Navigue vers l'écran d'historique des achats"

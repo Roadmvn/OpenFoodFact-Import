@@ -16,6 +16,7 @@ export const themes = {
     accent: '#4CAF50', // Vert selon la palette du projet
     background: '#f5f5f5',
     card: '#FFFFFF',
+    cardAlt: '#F9F9F9', // Couleur alternative pour les cartes
     text: '#333333',
     textSecondary: '#666666',
     border: '#e0e0e0',
@@ -42,6 +43,7 @@ export const themes = {
     accent: '#E66100', // Orange optimisé pour les daltoniens
     background: '#f5f5f5',
     card: '#FFFFFF',
+    cardAlt: '#F9F9F9', // Couleur alternative pour les cartes
     text: '#333333',
     textSecondary: '#666666',
     border: '#e0e0e0',

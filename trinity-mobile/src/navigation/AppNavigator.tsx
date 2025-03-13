@@ -18,8 +18,9 @@ import CartScreen from '../screens/cart/CartScreen';
 import AccessibilityScreen from '../screens/settings/AccessibilityScreen';
 // Import de l'écran de profil
 import ProfileScreen from '../screens/profile/ProfileScreen';
-// Import de l'écran d'historique des commandes
+// Import des écrans liés aux commandes
 import OrderHistoryScreen from '../screens/orders/OrderHistoryScreen';
+import OrderDetailsScreen from '../screens/orders/OrderDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -59,6 +60,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+            <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
             <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
           </>
         )}

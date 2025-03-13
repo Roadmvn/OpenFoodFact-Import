@@ -56,6 +56,10 @@ const DashboardScreen = () => {
     navigation.navigate('Accessibility' as never);
   };
 
+  const handleOrderHistoryPress = () => {
+    navigation.navigate('OrderHistory' as never);
+  };
+
   // Fonction pour obtenir les initiales de l'utilisateur
   const getUserInitials = () => {
     if (!user) return '';
@@ -107,6 +111,23 @@ const DashboardScreen = () => {
                   <IconButton icon="eye-settings" color="#FFFFFF" size={24} />
                 </LinearGradient>
                 <Text style={[styles.buttonLabel, { color: theme.text }]}>Accessibilité</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={handleOrderHistoryPress}
+                accessibilityLabel="Historique des commandes"
+                accessibilityHint="Voir l'historique de vos commandes"
+              >
+                <LinearGradient
+                  colors={theme.accentGradient}
+                  style={styles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <IconButton icon="history" color="#FFFFFF" size={24} />
+                </LinearGradient>
+                <Text style={[styles.buttonLabel, { color: theme.text }]}>Commandes</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
