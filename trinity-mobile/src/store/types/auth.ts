@@ -4,12 +4,10 @@ export interface User {
   firstName: string;
   lastName: string;
   phone?: string;
-  address?: {
-    street: string;
-    postalCode: string;
-    city: string;
-    country: string;
-  };
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface LoginCredentials {
@@ -28,12 +26,10 @@ export interface RegisterCredentials {
   firstName: string;
   lastName: string;
   phone?: string;
-  address?: {
-    street: string;
-    postalCode: string;
-    city: string;
-    country: string;
-  };
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface RegisterResponse {
@@ -52,12 +48,10 @@ export interface UpdateUserProfileRequest {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  address?: {
-    street?: string;
-    postalCode?: string;
-    city?: string;
-    country?: string;
-  };
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface UpdateUserProfileResponse {

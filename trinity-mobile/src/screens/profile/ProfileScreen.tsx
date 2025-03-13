@@ -23,6 +23,12 @@ const ProfileScreen = () => {
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   
+  // États pour les champs d'adresse (à plat, comme attendu par le backend)
+  const [street, setStreet] = useState(user?.street || '');
+  const [postalCode, setPostalCode] = useState(user?.zipCode || user?.postalCode || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [country, setCountry] = useState(user?.country || '');
+  
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(width)).current;
@@ -37,6 +43,18 @@ const ProfileScreen = () => {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setPhone(user.phone || '');
+      
+      // Mise à jour des champs d'adresse (à plat)
+      console.log('ProfileScreen: Updating address fields', {
+        street: user.street,
+        postalCode: user.zipCode || user.postalCode,
+        city: user.city,
+        country: user.country
+      });
+      setStreet(user.street || '');
+      setPostalCode(user.zipCode || user.postalCode || '');
+      setCity(user.city || '');
+      setCountry(user.country || '');
     }
   }, [user]);
   
@@ -68,12 +86,47 @@ const ProfileScreen = () => {
     setIsEditing(!isEditing);
   };
   
+  // Fonction pour valider les champs
+  const validateFields = () => {
+    console.log('ProfileScreen: Validating fields', {
+      postalCode,
+      city
+    });
+    
+    // Validation du code postal (format français)
+    if (postalCode && !/^\d{5}$/.test(postalCode)) {
+      console.log('ProfileScreen: Invalid postal code format', postalCode);
+      Alert.alert('Erreur de validation', 'Le code postal doit contenir 5 chiffres.');
+      return false;
+    }
+    
+    // Validation de base pour les autres champs
+    if (city && city.length < 2) {
+      console.log('ProfileScreen: City name too short', city);
+      Alert.alert('Erreur de validation', 'Le nom de la ville doit contenir au moins 2 caractères.');
+      return false;
+    }
+    
+    console.log('ProfileScreen: Fields validation successful');
+    return true;
+  };
+  
   // Fonction pour sauvegarder les modifications
   const saveChanges = () => {
+    // Validation des champs
+    if (!validateFields()) {
+      return;
+    }
+    
+    // Créer l'objet avec tous les champs à plat, comme attendu par le backend
     const updatedProfile = {
       firstName,
       lastName,
       phone,
+      street,
+      postalCode,
+      city,
+      country
     };
     
     console.log('ProfileScreen: Saving profile changes', updatedProfile);
@@ -88,6 +141,13 @@ const ProfileScreen = () => {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setPhone(user.phone || '');
+      
+      // Réinitialisation des champs d'adresse (à plat)
+      console.log('ProfileScreen: Resetting address fields');
+      setStreet(user.street || '');
+      setPostalCode(user.zipCode || user.postalCode || '');
+      setCity(user.city || '');
+      setCountry(user.country || '');
     }
     setIsEditing(false);
   };
@@ -254,6 +314,110 @@ const ProfileScreen = () => {
                       <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Téléphone:</Text>
                         <Text style={styles.infoValue}>{phone || 'Non renseigné'}</Text>
+                      </View>
+                    </>
+                  )}
+                </Card.Content>
+              </Card>
+            </Animatable.View>
+            
+            {/* Section Adresse */}
+            <Animatable.View 
+              animation="fadeInUp" 
+              duration={800} 
+              delay={1100}
+            >
+              <Card style={styles.card} elevation={3}>
+                <Card.Title 
+                  title="Adresse" 
+                  titleStyle={styles.cardTitle}
+                  left={(props) => <IconButton {...props} icon="map-marker" color={theme.primary} />}
+                />
+                <Card.Content>
+                  {isEditing ? (
+                    <>
+                      <Animatable.View animation="fadeIn" duration={500}>
+                        <TextInput
+                          label="Rue"
+                          value={street}
+                          onChangeText={setStreet}
+                          style={styles.input}
+                          mode="outlined"
+                          outlineColor={theme.border}
+                          activeOutlineColor={theme.primary}
+                          disabled={loading}
+                          accessibilityLabel="Rue"
+                          accessibilityHint="Entrez votre rue"
+                        />
+                      </Animatable.View>
+                      
+                      <Animatable.View animation="fadeIn" duration={500} delay={100}>
+                        <TextInput
+                          label="Code postal"
+                          value={postalCode}
+                          onChangeText={setPostalCode}
+                          style={styles.input}
+                          mode="outlined"
+                          outlineColor={theme.border}
+                          activeOutlineColor={theme.primary}
+                          keyboardType="numeric"
+                          maxLength={5}
+                          disabled={loading}
+                          accessibilityLabel="Code postal"
+                          accessibilityHint="Entrez votre code postal"
+                        />
+                      </Animatable.View>
+                      
+                      <Animatable.View animation="fadeIn" duration={500} delay={200}>
+                        <TextInput
+                          label="Ville"
+                          value={city}
+                          onChangeText={setCity}
+                          style={styles.input}
+                          mode="outlined"
+                          outlineColor={theme.border}
+                          activeOutlineColor={theme.primary}
+                          disabled={loading}
+                          accessibilityLabel="Ville"
+                          accessibilityHint="Entrez votre ville"
+                        />
+                      </Animatable.View>
+                      
+                      <Animatable.View animation="fadeIn" duration={500} delay={300}>
+                        <TextInput
+                          label="Pays"
+                          value={country}
+                          onChangeText={setCountry}
+                          style={styles.input}
+                          mode="outlined"
+                          outlineColor={theme.border}
+                          activeOutlineColor={theme.primary}
+                          disabled={loading}
+                          accessibilityLabel="Pays"
+                          accessibilityHint="Entrez votre pays"
+                        />
+                      </Animatable.View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Rue:</Text>
+                        <Text style={styles.infoValue}>{street || 'Non renseignée'}</Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Code postal:</Text>
+                        <Text style={styles.infoValue}>{postalCode || 'Non renseigné'}</Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Ville:</Text>
+                        <Text style={styles.infoValue}>{city || 'Non renseignée'}</Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Pays:</Text>
+                        <Text style={styles.infoValue}>{country || 'Non renseigné'}</Text>
                       </View>
                     </>
                   )}

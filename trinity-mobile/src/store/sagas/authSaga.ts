@@ -88,9 +88,31 @@ function* handleLogout(): Generator<any, void, any> {
 function* handleUpdateProfile(action: PayloadAction<UpdateUserProfileRequest>): Generator<any, void, any> {
   try {
     console.log('AuthSaga: Starting profile update', action.payload);
+    
+    // Vérifier si nous avons des données d'adresse
+    const addressFields = {
+      street: action.payload.street,
+      postalCode: action.payload.postalCode,
+      city: action.payload.city,
+      country: action.payload.country
+    };
+    
+    console.log('AuthSaga: Address fields in update request', addressFields);
+    
     const user = yield call(UserService.updateUserProfile as any, action.payload);
+    
     console.log('AuthSaga: Profile update successful', user);
+    
+    // Vérifier que les champs d'adresse ont été correctement mis à jour
+    console.log('AuthSaga: Updated address fields', {
+      street: user.street,
+      postalCode: user.postalCode,
+      city: user.city,
+      country: user.country
+    });
+    
     yield put(updateProfileSuccess(user));
+    
     Toast.show({
       type: 'success',
       text1: 'Profil mis à jour',
