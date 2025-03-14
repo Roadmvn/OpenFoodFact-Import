@@ -7,6 +7,8 @@ export interface CartItem {
   imageUrl: string;
   quantity: number;
   price: number; // À définir plus tard si nécessaire
+  internalProductId: number; // ID du produit interne
+  sellerId: number; // ID du vendeur
 }
 
 class CartService {

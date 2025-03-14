@@ -1,25 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import CartService, { CartItem } from '../../services/cart/cartService';
 import { useTheme } from '../../context/ThemeContext';
+
+// Type pour la navigation
+type CartNavigationProp = StackNavigationProp<{
+  Dashboard: undefined;
+  Payment: {
+    cartItems: CartItem[];
+    totalAmount: number;
+  };
+}>;
 
 const CartScreen = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
   
-  const navigation = useNavigation();
-  const { theme, isColorblindMode } = useTheme();
+  const navigation = useNavigation<CartNavigationProp>();
+  const { theme, colorBlindMode } = useTheme();
   
   // Log pour déboguer le thème
   useEffect(() => {
-    console.log('CartScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('CartScreen - Mode daltonien actif:', colorBlindMode);
     console.log('CartScreen - Couleur primaire actuelle:', theme.primary);
     console.log('CartScreen - Couleur d\'accent actuelle:', theme.accent);
-  }, [isColorblindMode, theme]);
+  }, [colorBlindMode, theme]);
   
   useEffect(() => {
     loadCartItems();
@@ -70,9 +80,11 @@ const CartScreen = () => {
       return;
     }
     
-    // Navigation vers l'écran de paiement (à implémenter plus tard)
-    // navigation.navigate('Payment');
-    Alert.alert('Paiement', 'Redirection vers la page de paiement PayPal...');
+    // Navigation vers l'écran de paiement avec les articles du panier et le montant total
+    navigation.navigate('Payment', {
+      cartItems,
+      totalAmount: totalPrice
+    });
   };
   
   const renderCartItem = ({ item }: { item: CartItem }) => (
@@ -86,16 +98,24 @@ const CartScreen = () => {
       )}
       
       <View style={styles.productInfo}>
-        <Text style={[styles.productName, { color: theme.text }]}>{item.productName}</Text>
+        <View style={styles.productHeader}>
+          <Text style={[styles.productName, { color: theme.text }]}>{item.productName}</Text>
+          <TouchableOpacity
+            style={[styles.removeButton, { backgroundColor: '#FFEBEB', borderColor: theme.error }]}
+            onPress={() => handleRemoveItem(item.barcode)}
+          >
+            <Ionicons name="trash" size={22} color={theme.error} />
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.productBrand, { color: theme.textSecondary }]}>{item.brand}</Text>
         <Text style={[styles.productPrice, { color: theme.accent }]}>{item.price.toFixed(2)} €</Text>
         
         <View style={styles.quantityContainer}>
           <TouchableOpacity 
             style={styles.quantityButton}
-            onPress={() => handleUpdateQuantity(item.barcode, item.quantity - 1)}
+            onPress={() => handleUpdateQuantity(item.barcode, Math.max(1, item.quantity - 1))}
           >
-            <Ionicons name="remove" size={20} color={theme.accent} />
+            <Text style={styles.quantityButtonText}>-</Text>
           </TouchableOpacity>
           
           <Text style={[styles.quantityText, { color: theme.text }]}>{item.quantity}</Text>
@@ -104,17 +124,10 @@ const CartScreen = () => {
             style={styles.quantityButton}
             onPress={() => handleUpdateQuantity(item.barcode, item.quantity + 1)}
           >
-            <Ionicons name="add" size={20} color={theme.accent} />
+            <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
-      
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => handleRemoveItem(item.barcode)}
-      >
-        <Ionicons name="trash-outline" size={24} color={theme.error} />
-      </TouchableOpacity>
     </View>
   );
   
@@ -127,7 +140,7 @@ const CartScreen = () => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mon panier</Text>
       </View>
@@ -164,7 +177,7 @@ const CartScreen = () => {
             </View>
             
             <TouchableOpacity 
-              style={[styles.checkoutButton, { backgroundColor: isColorblindMode ? theme.accent : theme.secondary }]}
+              style={[styles.checkoutButton, { backgroundColor: colorBlindMode ? theme.accent : theme.secondary }]}
               onPress={handleCheckout}
               activeOpacity={0.8}
             >
@@ -196,8 +209,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
   },
   headerTitle: {
     color: '#FFFFFF',
@@ -262,6 +279,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  productHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 5,
+  },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -287,15 +311,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   quantityText: {
-    fontSize: 16,
-    marginHorizontal: 10,
-    minWidth: 20,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginHorizontal: 12,
+    minWidth: 25,
     textAlign: 'center',
   },
   removeButton: {
-    padding: 5,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    backgroundColor: '#FFEBEB',
   },
   summaryContainer: {
     padding: 15,

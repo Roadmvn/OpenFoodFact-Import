@@ -24,27 +24,50 @@ const ProductDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
   const { barcode } = route.params as { barcode: string };
-  const { theme, isColorblindMode } = useTheme();
+  const { theme, colorBlindMode } = useTheme();
   
   // Log pour déboguer le thème
   useEffect(() => {
-    console.log('ProductDetailScreen - Mode daltonien actif:', isColorblindMode);
+    console.log('ProductDetailScreen - Mode daltonien actif:', colorBlindMode);
     console.log('ProductDetailScreen - Couleur primaire actuelle:', theme.primary);
     console.log('ProductDetailScreen - Couleur d\'accent actuelle:', theme.accent);
-  }, [isColorblindMode, theme]);
+  }, [colorBlindMode, theme]);
   
   // Fonction pour ajouter le produit au panier
   const handleAddToCart = async () => {
     if (product) {
       try {
-        // Créer un objet CartItem avec les informations du produit
+        // Vérifier si le produit est disponible dans notre système interne
+        const internalProduct = await ProductService.checkInternalProduct(barcode);
+        
+        if (!internalProduct) {
+          Alert.alert(
+            "Produit non disponible",
+            "Ce produit n'est pas disponible à l'achat dans notre système.",
+            [{ text: "OK" }]
+          );
+          return;
+        }
+        
+        if (!internalProduct.available || internalProduct.stock <= 0) {
+          Alert.alert(
+            "Produit en rupture de stock",
+            "Ce produit n'est actuellement pas disponible à l'achat.",
+            [{ text: "OK" }]
+          );
+          return;
+        }
+        
+        // Créer un objet CartItem avec les informations du produit interne
         const cartItem: CartItem = {
           barcode: barcode,
-          productName: product.product.product_name || 'Produit inconnu',
+          productName: product.product.product_name || internalProduct.name,
           brand: product.product.brands || 'Marque inconnue',
           imageUrl: product.product.image_url || '',
           quantity: 1,
-          price: 0 // À définir plus tard si nécessaire
+          price: internalProduct.price,
+          internalProductId: internalProduct.id,
+          sellerId: internalProduct.sellerId
         };
         
         // Ajouter le produit au panier
@@ -80,21 +103,35 @@ const ProductDetailScreen = () => {
   };
   
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchProductData = async () => {
       try {
         setLoading(true);
         const data = await ProductService.getProductByBarcode(barcode);
-        setProduct(data);
-        setError(null);
-      } catch (err) {
-        setError('Impossible de récupérer les informations du produit');
-        console.error(err);
+        
+        if (isMounted) {
+          setProduct(data);
+          setError(null);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.message || 'Impossible de récupérer les informations du produit');
+          console.error(err);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
     fetchProductData();
+    
+    // Nettoyage pour éviter les fuites de mémoire
+    return () => {
+      isMounted = false;
+    };
   }, [barcode]);
   
   const renderNutrientItem = (label: string, value: string | number | undefined, unit: string = '') => (
@@ -113,7 +150,7 @@ const ProductDetailScreen = () => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Détails du produit</Text>
       </View>
@@ -122,6 +159,7 @@ const ProductDetailScreen = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.accent} />
           <Text style={[styles.loadingText, { color: theme.text }]}>Chargement des informations...</Text>
+          <Text style={[styles.loadingSubText, { color: theme.textSecondary }]}>Récupération des données depuis OpenFoodFacts</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
@@ -235,10 +273,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginTop: 15,
-    fontSize: 16,
+    textAlign: 'center',
+  },
+  loadingSubText: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    maxWidth: '80%',
   },
   errorContainer: {
     flex: 1,

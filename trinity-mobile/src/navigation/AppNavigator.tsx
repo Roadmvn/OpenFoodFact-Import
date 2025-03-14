@@ -21,6 +21,9 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 // Import des écrans liés aux commandes
 import OrderHistoryScreen from '../screens/orders/OrderHistoryScreen';
 import OrderDetailsScreen from '../screens/orders/OrderDetailsScreen';
+// Import des écrans de paiement
+import PaymentScreen from '../screens/payment/PaymentScreen';
+import PaymentSuccessScreen from '../screens/payment/PaymentSuccessScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +61,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Scan" component={ScanScreen} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
             <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />

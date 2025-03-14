@@ -35,6 +35,7 @@ export const themes = {
     cardGradient: ['#4A90E2', '#4CAF50'],
     accentGradient: ['#4CAF50', '#4A90E2'], // Gradient pour les boutons d'accent (vert-bleu)
     buttonGradient: ['#4CAF50', '#4A90E2'], // Gradient pour tous les boutons (vert-bleu)
+    dark: false, // Indique si c'est un thème sombre
   },
   colorblind: {
     // Palette adaptée pour les daltoniens avec contraste élevé
@@ -62,6 +63,7 @@ export const themes = {
     cardGradient: ['#0C7BDC', '#E66100'],
     accentGradient: ['#E66100', '#0C7BDC'], // Gradient pour les boutons d'accent (orange-bleu)
     buttonGradient: ['#E66100', '#0C7BDC'], // Gradient pour tous les boutons (orange-bleu)
+    dark: false, // Indique si c'est un thème sombre
   },
 };
 
