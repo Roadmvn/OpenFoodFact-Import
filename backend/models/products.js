@@ -18,12 +18,6 @@ module.exports = (sequelize, DataTypes) => {
                 unique: true,
                 allowNull: true,
             },
-            barcode: {
-                type: DataTypes.STRING(255),
-                unique: true,
-                allowNull: true,
-                comment: 'Code-barres du produit (EAN, UPC, etc.)',
-            },
             name: {
                 type: DataTypes.STRING(255),
                 allowNull: false,

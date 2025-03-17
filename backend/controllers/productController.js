@@ -157,7 +157,6 @@ class ProductController {
                 [Op.or]: [
                     { name: { [Op.like]: `%${q}%` } }, // 按名字模糊搜索
                     { code: { [Op.like]: `%${q}%` } }, // 或按代码模糊搜索
-                    { barcode: { [Op.like]: `%${q}%` } }, // 或按条形码模糊搜索
                 ],
             };
 

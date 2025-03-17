@@ -1,7 +1,7 @@
 {
   "development": {
-    "username": "pc",
-    "password": "Jiojio000608.",
+    "username": "root",
+    "password": "root",
     "database": "trinity",
     "host": "127.0.0.1",
     "dialect": "mysql"
