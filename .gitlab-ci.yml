@@ -1,0 +1,90 @@
+stages:
+  - test
+  - build
+  - deploy
+
+test_backend:
+  stage: test
+  image: node:18
+  allow_failure: true
+  script:
+    - cd backend
+    - npm install --legacy-peer-deps
+    - npx vitest run --coverage
+
+test_frontend:
+  stage: test
+  image: node:18
+  allow_failure: true
+  script:
+    - cd frontend
+    - rm -rf node_modules package-lock.json
+    - npm install --legacy-peer-deps
+    - npm run test:unit
+
+build_backend:
+  stage: build
+  image: node:18
+  script:
+    - cd backend
+    - npm install --legacy-peer-deps
+    - npm run build
+    - docker build -f Dockerfile.prod -t backend:latest .
+  only:
+    - main
+    - zeyu
+
+build_dev_backend:
+  stage: build
+  image: node:18
+  script:
+    - cd backend
+    - npm install --legacy-peer-deps
+    - npm run build
+    - docker build -f Dockerfile.dev -t backend:latest .
+  only:
+    - dev
+
+build_frontend:
+  stage: build
+  image: node:18
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+    - npm run build
+    - docker build -f Dockerfile.prod -t frontend:latest .
+  only:
+    - main
+    - zeyu
+
+build_dev_frontend:
+  stage: build
+  image: node:18
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+    - npm run build
+    - docker build -f Dockerfile.prod -t frontend:latest .
+  only:
+    - dev
+
+deploy:
+  stage: deploy
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  script:
+    - docker-compose up -d --force-recreate
+  only:
+    - main
+    - zeyu
+
+deploy_dev:
+  stage: deploy
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  script:
+    - docker-compose up -d --force-recreate
+  only:
+    - dev
