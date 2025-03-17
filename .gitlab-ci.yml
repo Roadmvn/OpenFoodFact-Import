@@ -31,22 +31,22 @@ build_backend:
   script:
     - cd backend
     - npm install --legacy-peer-deps
-    - npm run build
+    - npm run build -- --force
     - docker build -f Dockerfile.prod -t backend:latest .
   only:
     - main
     - zeyu
 
-build_dev_backend:
-  stage: build
-  image: node:18
-  script:
-    - cd backend
-    - npm install --legacy-peer-deps
-    - npm run build
-    - docker build -f Dockerfile.dev -t backend:latest .
-  only:
-    - dev
+# build_dev_backend:
+#   stage: build
+#   image: node:18
+#   script:
+#     - cd backend
+#     - npm install --legacy-peer-deps
+#     - npm run build
+#     - docker build -f Dockerfile.dev -t backend:latest .
+#   only:
+#     - dev
 
 build_frontend:
   stage: build
@@ -60,16 +60,16 @@ build_frontend:
     - main
     - zeyu
 
-build_dev_frontend:
-  stage: build
-  image: node:18
-  script:
-    - cd front
-    - npm install --legacy-peer-deps
-    - npm run build
-    - docker build -f Dockerfile.prod -t frontend:latest .
-  only:
-    - dev
+# build_dev_frontend:
+#   stage: build
+#   image: node:18
+#   script:
+#     - cd front
+#     - npm install --legacy-peer-deps
+#     - npm run build
+#     - docker build -f Dockerfile.prod -t frontend:latest .
+#   only:
+#     - dev
 
 deploy:
   stage: deploy

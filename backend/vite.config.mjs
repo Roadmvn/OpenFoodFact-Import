@@ -6,5 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: './tests/setup.js'
-  }
+  },
+  build: {
+    outDir: 'dist', // Chemin de sortie par défaut
+  },
 });
