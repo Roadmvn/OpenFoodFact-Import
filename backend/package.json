@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "vitest"
+    "test": "vitest",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
