@@ -1,9 +1,9 @@
 const mysql = require("mysql2");
 
 const pool = mysql.createPool({
-    host: "localhost", // 数据库主机
-    user: "pc",      // 数据库用户名
-    password: "Jiojio000608.", // 数据库密码
+    host: "http://89.156.15.147", // 数据库主机
+    user: "root",      // 数据库用户名
+    password: DB_PASS, // 数据库密码
     database: "trinity",  // 数据库名称
     waitForConnections: true,
     connectionLimit: 10,

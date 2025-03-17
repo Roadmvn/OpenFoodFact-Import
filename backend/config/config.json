@@ -1,23 +1,23 @@
 {
   "development": {
-    "username": "pc",
-    "password": "Jiojio000608.",
+    "username": "root",
+    "password": "Jiojio00608.",
     "database": "trinity",
-    "host": "127.0.0.1",
+    "host": "http://89.156.15.147",
     "dialect": "mysql"
   },
   "test": {
     "username": "root",
     "password": "root",
     "database": "trinity_test",
-    "host": "127.0.0.1",
+    "host": "http://89.156.15.147",
     "dialect": "mysql"
   },
   "production": {
     "username": "root",
     "password": "root",
     "database": "trinity_production",
-    "host": "127.0.0.1",
+    "host": "http://89.156.15.147",
     "dialect": "mysql"
   }
 }
