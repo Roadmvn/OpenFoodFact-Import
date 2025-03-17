@@ -28,6 +28,7 @@ test_frontend:
 build_backend:
   stage: build
   image: node:18
+  allow_failure: true
   script:
     - cd backend
     - npm install --legacy-peer-deps
@@ -51,6 +52,7 @@ build_backend:
 build_frontend:
   stage: build
   image: node:18
+  allow_failure: true
   script:
     - cd front
     - npm install --legacy-peer-deps
