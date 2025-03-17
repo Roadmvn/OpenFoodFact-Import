@@ -5,8 +5,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "vitest",
-    "build": "vite build"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -38,8 +37,5 @@
     "nodemon": "^3.1.9",
     "vite": "^6.1.0",
     "vitest": "^3.0.5"
-  },
-  "resolutions": {
-    "glob": "^9.0.0"
   }
 }
