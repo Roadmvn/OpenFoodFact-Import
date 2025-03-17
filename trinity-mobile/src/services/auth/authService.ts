@@ -11,8 +11,10 @@ class AuthService {
       console.log('URL de l\'API:', `${API_URL}/auth/login`);
       console.log('Tentative de connexion avec:', credentials);
       
+      // Ajout d'un timeout de 10 secondes pour éviter les attentes infinies
       const response = await axios.post(`${API_URL}/auth/login`, credentials, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000 // 10 secondes de timeout
       });
       console.log('Réponse complète du serveur:', response);
       console.log('Données de la réponse:', response.data);
@@ -27,12 +29,23 @@ class AuthService {
       return response.data;
     } catch (error) {
       console.error('Erreur complète dans AuthService.login:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        console.error('Détails de l\'erreur Axios:', {
-          status: error.response.status,
-          headers: error.response.headers,
-          response: error.response.data
-        });
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          console.error('Timeout de la requête - Le serveur ne répond pas');
+          throw new Error('Le serveur ne répond pas. Veuillez vérifier votre connexion ou réessayer plus tard.');
+        }
+        
+        if (error.response) {
+          console.error('Détails de l\'erreur Axios:', {
+            status: error.response.status,
+            headers: error.response.headers,
+            response: error.response.data
+          });
+        } else if (error.request) {
+          // La requête a été faite mais pas de réponse reçue
+          console.error('Pas de réponse reçue du serveur');
+          throw new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau.');
+        }
       }
       throw AuthService.handleError(error);
     }
@@ -47,13 +60,32 @@ class AuthService {
       };
       
       const response = await axios.post(`${API_URL}/auth/register`, formattedData, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000 // 10 secondes de timeout
       });
       
       // On retourne simplement la réponse sans vérifier le token
       return response.data;
     } catch (error) {
       console.error('Erreur complète dans AuthService.register:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          console.error('Timeout de la requête - Le serveur ne répond pas');
+          throw new Error('Le serveur ne répond pas. Veuillez vérifier votre connexion ou réessayer plus tard.');
+        }
+        
+        if (error.response) {
+          console.error('Détails de l\'erreur Axios:', {
+            status: error.response.status,
+            headers: error.response.headers,
+            response: error.response.data
+          });
+        } else if (error.request) {
+          // La requête a été faite mais pas de réponse reçue
+          console.error('Pas de réponse reçue du serveur');
+          throw new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau.');
+        }
+      }
       throw AuthService.handleError(error);
     }
   }
@@ -65,7 +97,8 @@ class AuthService {
       
       // Appel à l'API pour la déconnexion
       await axios.post(`${API_URL}/auth/logout`, {}, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000 // 10 secondes de timeout
       });
       
       // Nettoyer les données locales
@@ -74,6 +107,24 @@ class AuthService {
       
     } catch (error) {
       console.error('Erreur complète dans AuthService.logout:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          console.error('Timeout de la requête - Le serveur ne répond pas');
+          throw new Error('Le serveur ne répond pas. Veuillez vérifier votre connexion ou réessayer plus tard.');
+        }
+        
+        if (error.response) {
+          console.error('Détails de l\'erreur Axios:', {
+            status: error.response.status,
+            headers: error.response.headers,
+            response: error.response.data
+          });
+        } else if (error.request) {
+          // La requête a été faite mais pas de réponse reçue
+          console.error('Pas de réponse reçue du serveur');
+          throw new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau.');
+        }
+      }
       throw AuthService.handleError(error);
     }
   }

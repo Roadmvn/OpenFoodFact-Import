@@ -10,6 +10,8 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
 // Import de l'écran de scan
 import ScanScreen from '../screens/camera/ScanScreen';
+// Import de l'écran de scan natif
+import NativeScanScreen from '../screens/camera/NativeScanScreen';
 // Import de l'écran de détail du produit
 import ProductDetailScreen from '../screens/products/ProductDetailScreen';
 // Import de l'écran du panier
@@ -59,6 +61,7 @@ export default function AppNavigator() {
           <>
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
             <Stack.Screen name="Scan" component={ScanScreen} />
+            <Stack.Screen name="NativeScan" component={NativeScanScreen} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Payment" component={PaymentScreen} options={{ headerShown: false }} />

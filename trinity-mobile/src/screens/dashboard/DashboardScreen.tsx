@@ -48,6 +48,11 @@ const DashboardScreen = () => {
     navigation.navigate('Scan' as never);
   };
 
+  const handleNativeScanPress = () => {
+    // Navigation vers l'écran de scan natif
+    navigation.navigate('NativeScan' as never);
+  };
+
   const handleProfilePress = () => {
     navigation.navigate('Profile' as never);
   };
@@ -224,24 +229,45 @@ const DashboardScreen = () => {
           )}
         </View>
 
-        <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
-          <TouchableOpacity
-            style={styles.fabContainer}
-            onPress={handleScanPress}
-            accessibilityLabel="Scanner un produit"
-            accessibilityHint="Ouvrir la caméra pour scanner un code-barres"
-          >
-            <LinearGradient
-              colors={theme.accentGradient}
-              style={styles.fab}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+        <View style={styles.scanButtonsContainer}>
+          <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
+            <TouchableOpacity
+              style={styles.fabContainer}
+              onPress={handleScanPress}
+              accessibilityLabel="Scanner un produit"
+              accessibilityHint="Ouvrir la caméra pour scanner un code-barres"
             >
-              <IconButton icon="barcode-scan" color="#FFFFFF" size={30} />
-            </LinearGradient>
-            <Text style={styles.fabLabel}>Scanner</Text>
-          </TouchableOpacity>
-        </Animatable.View>
+              <LinearGradient
+                colors={theme.accentGradient}
+                style={styles.fab}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <IconButton icon="barcode-scan" color="#FFFFFF" size={30} />
+              </LinearGradient>
+              <Text style={styles.fabLabel}>Scanner</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
+          <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite" delay={300}>
+            <TouchableOpacity
+              style={styles.fabContainer}
+              onPress={handleNativeScanPress}
+              accessibilityLabel="Scanner natif"
+              accessibilityHint="Ouvrir le scanner natif pour une meilleure performance"
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#2E7D32']}
+                style={styles.fab}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <IconButton icon="barcode" color="#FFFFFF" size={30} />
+              </LinearGradient>
+              <Text style={styles.fabLabel}>Scanner Natif</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -257,8 +283,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
     paddingBottom: 10,
+    paddingHorizontal: 16,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -266,10 +293,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   headerContent: {
-    padding: 16,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   titleContainer: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   titleText: {
     fontSize: 24,
@@ -282,16 +310,15 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    width: '100%',
   },
   headerButton: {
     alignItems: 'center',
-    width: 90,
+    marginHorizontal: 4,
   },
   buttonGradient: {
-    borderRadius: 25,
-    padding: 5,
-    marginBottom: 5,
+    borderRadius: 20,
+    padding: 2,
   },
   buttonLabel: {
     fontSize: 12,
@@ -302,16 +329,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   userInfoContainer: {
-    padding: 16,
     borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     marginBottom: 20,
-    elevation: 3,
   },
   userHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   avatarContainer: {
     borderRadius: 30,
@@ -322,28 +348,24 @@ const styles = StyleSheet.create({
   },
   userTextContainer: {
     marginLeft: 16,
-    flex: 1,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   emailText: {
     fontSize: 14,
-    marginBottom: 8,
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   statBox: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 4,
-    elevation: 2,
+    borderRadius: 8,
+    padding: 12,
+    width: '45%',
   },
   statCircle: {
     width: 60,
@@ -354,23 +376,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   statLabel: {
-    fontSize: 12,
-    textAlign: 'center',
+    fontSize: 14,
   },
   errorText: {
     fontSize: 16,
     textAlign: 'center',
   },
+  scanButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingBottom: 20,
+  },
   fabContainer: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
     alignItems: 'center',
+    marginBottom: 20,
   },
   fab: {
     width: 60,
@@ -378,16 +402,16 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowRadius: 5,
   },
   fabLabel: {
-    marginTop: 5,
-    fontSize: 12,
+    marginTop: 8,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
-  },
+  }
 });

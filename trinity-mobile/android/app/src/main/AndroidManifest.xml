@@ -27,7 +27,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="com.anonymous.trinitymobile"/>
+        <data android:scheme="com.trinity.mobile"/>
         <data android:scheme="exp+trinity-mobile"/>
       </intent-filter>
     </activity>

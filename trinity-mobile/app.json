@@ -15,9 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
-      }
+        "NSCameraUsageDescription": "Trinity Mobile a besoin d'accéder à votre caméra pour scanner les codes-barres des produits",
+        "NSMicrophoneUsageDescription": "Trinity Mobile a besoin d'accéder à votre microphone",
+        "NSPhotoLibraryUsageDescription": "Trinity Mobile a besoin d'accéder à votre galerie photo pour sauvegarder temporairement les images scannées"
+      },
+      "bundleIdentifier": "com.trinity.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,13 +27,31 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.VIBRATE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
-      "package": "com.anonymous.trinitymobile"
+      "package": "com.trinity.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Trinity Mobile a besoin d'accéder à votre caméra pour scanner les codes-barres des produits",
+          "photoLibraryPermissionText": "Trinity Mobile a besoin d'accéder à votre galerie photo pour sauvegarder temporairement les images scannées"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": null
+      },
+      "disableAuthentication": true
+    },
+    "owner": "anonymous"
   }
 }

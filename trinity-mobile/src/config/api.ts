@@ -8,7 +8,7 @@ const getBaseUrl = () => {
     // Pour l'émulateur Android, utiliser 10.0.2.2
     // Pour un appareil physique, utiliser l'adresse IP de votre machine
     // Détecter si on est sur un émulateur ou un appareil physique
-    const isEmulator = false; // À modifier selon votre environnement
+    const isEmulator = true; // Modifié pour utiliser l'adresse de l'émulateur
     
     return isEmulator 
       ? `http://10.0.2.2:${API_PORT}`
