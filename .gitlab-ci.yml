@@ -20,8 +20,9 @@ test_frontend:
     - cd front
     - rm -rf node_modules package-lock.json
     - npm cache clean --force
+    - npm install -g npm@9.5.0
     - npm install --legacy-peer-deps
-    - npm install -g npm@latest
+    - npm update
     - npm run test:unit
 
 build_backend:
