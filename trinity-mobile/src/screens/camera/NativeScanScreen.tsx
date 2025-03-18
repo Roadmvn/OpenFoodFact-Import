@@ -10,12 +10,13 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { Camera, useCameraDevices } from 'react-native-vision-camera';
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import { BarcodeScannerService } from '../../services/barcode/BarcodeScannerService';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../../context/ThemeContext';
-import { scanBarcodes, BarcodeFormat } from '@react-native-ml-kit/barcode-scanning';
+import BarcodeScanning from '@react-native-ml-kit/barcode-scanning';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Définition du type pour la navigation
 type RootStackParamList = {
@@ -28,14 +29,19 @@ interface BarcodeResult {
   format: string;
 }
 
+// Type pour le mode torche
+type TorchMode = 'on' | 'off';
+
 export default function NativeScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [torch, setTorch] = useState<TorchMode>('off');
+  const [imageQuality, setImageQuality] = useState(80); // Qualité d'image par défaut (0-100)
   const camera = useRef<Camera>(null);
-  const devices = useCameraDevices();
-  const device = devices.back;
+  // Utiliser l'appareil photo arrière avec le hook useCameraDevice
+  const device = useCameraDevice('back');
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
   const [deviceInitialized, setDeviceInitialized] = useState(false);
@@ -64,11 +70,44 @@ export default function NativeScanScreen() {
   useEffect(() => {
     if (device) {
       console.log('[NativeScanScreen] Device de caméra disponible:', device.id);
+      console.log('[NativeScanScreen] Flash disponible:', device.hasFlash);
       setDeviceInitialized(true);
+      
+      // Vérifier si le flash est disponible avec le service
+      const hasTorch = BarcodeScannerService.isTorchAvailable(device);
+      console.log('[NativeScanScreen] Flash disponible selon le service:', hasTorch);
+      
+      // Si le flash n'est pas disponible, désactiver le mode torche
+      if (!hasTorch && torch === 'on') {
+        setTorch('off');
+      }
     } else {
       console.log('[NativeScanScreen] Device de caméra non disponible');
     }
-  }, [device]);
+  }, [device, torch]);
+
+  // Définir la qualité d'image optimale en fonction de l'appareil
+  useEffect(() => {
+    const optimalQuality = BarcodeScannerService.getOptimalImageQuality();
+    console.log('[NativeScanScreen] Qualité d\'image optimale définie à:', optimalQuality);
+    setImageQuality(optimalQuality);
+  }, []);
+
+  // Fonction pour basculer le mode torche
+  const toggleTorch = useCallback(() => {
+    // Vérifier si le flash est disponible avant de l'activer
+    if (device && BarcodeScannerService.isTorchAvailable(device)) {
+      setTorch((currentTorch: TorchMode) => currentTorch === 'off' ? 'on' : 'off');
+      console.log('[NativeScanScreen] Mode torche:', torch === 'off' ? 'activé' : 'désactivé');
+    } else {
+      console.log('[NativeScanScreen] Flash non disponible sur cet appareil');
+      Alert.alert(
+        'Flash non disponible',
+        'Cet appareil ne dispose pas de flash ou la fonctionnalité n\'est pas accessible.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [torch, device]);
 
   // Fonction pour traiter le code-barres scanné
   const onBarcodeDetected = useCallback((barcode: BarcodeResult) => {
@@ -91,10 +130,12 @@ export default function NativeScanScreen() {
     try {
       setProcessing(true);
       
-      // Capturer une photo
+      // Capturer une photo avec qualité optimisée
       const photo = await camera.current.takePhoto({
         qualityPrioritization: 'speed',
         flash: 'off',
+        // Note: La propriété 'quality' n'est pas supportée dans le type TakePhotoOptions
+        // Nous utilisons les options disponibles pour optimiser la capture
       });
       
       console.log('[NativeScanScreen] Photo capturée:', photo.path);
@@ -102,43 +143,41 @@ export default function NativeScanScreen() {
       // S'assurer que photo.path est une chaîne de caractères
       const photoPath = typeof photo.path === 'string' ? photo.path : String(photo.path);
       const photoUri = Platform.OS === 'android' ? `file://${photoPath}` : photoPath;
+      
+      // Conserver l'image capturée pour l'affichage
+      setCapturedImage(photoUri);
 
-      // En mode développement, simuler la détection d'un code-barres après un court délai
+      // En mode développement sur Android, simuler uniquement la détection du code-barres
       if (__DEV__ && Platform.OS === 'android') {
         console.log('[NativeScanScreen] Mode développement: simulation de détection de code-barres');
-        setCapturedImage(photoUri);
         
-        // Simuler un délai d'analyse
+        // Simuler un délai d'analyse comme si on traitait réellement l'image
         setTimeout(() => {
-          const simulatedBarcode: BarcodeResult = {
-            value: '3017620422003', // Code-barres Nutella pour test
-            format: 'EAN_13'
-          };
+          // Simuler différents codes-barres pour tester différents produits
+          const testBarcodes = [
+            { value: '3017620422003', format: 'EAN_13' }, // Nutella
+            { value: '3017620425035', format: 'EAN_13' }, // Nutella format différent
+            { value: '3168930010265', format: 'EAN_13' }, // Lait
+            { value: '5449000000996', format: 'EAN_13' }  // Coca-Cola
+          ];
+          
+          // Sélectionner aléatoirement un code-barres de test
+          const randomIndex = Math.floor(Math.random() * testBarcodes.length);
+          const simulatedBarcode = testBarcodes[randomIndex];
+          
           console.log('[NativeScanScreen] Code-barres simulé:', simulatedBarcode);
           onBarcodeDetected(simulatedBarcode);
         }, 1500);
         return;
       }
 
-      // Analyser l'image pour détecter les codes-barres
+      // Analyser l'image pour détecter les codes-barres (cas réel)
       console.log('[NativeScanScreen] Analyse de l\'image pour les codes-barres...');
-      const barcodes = await scanBarcodes(photoUri, {
-        formats: [
-          BarcodeFormat.EAN_13,
-          BarcodeFormat.EAN_8,
-          BarcodeFormat.UPC_A,
-          BarcodeFormat.UPC_E,
-          BarcodeFormat.QR_CODE,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.CODE_39,
-        ]
-      });
+      const barcodes = await BarcodeScanning.scan(photoUri);
 
       console.log('[NativeScanScreen] Résultat de l\'analyse:', barcodes);
 
       if (barcodes.length > 0) {
-        setCapturedImage(photoUri);
-        
         const barcodeResult: BarcodeResult = {
           value: barcodes[0].value || '',
           format: barcodes[0].format.toString()
@@ -163,7 +202,7 @@ export default function NativeScanScreen() {
         [{ text: 'OK', onPress: () => setScanned(false) }]
       );
     }
-  }, [scanned, processing, camera, onBarcodeDetected]);
+  }, [scanned, processing, camera, onBarcodeDetected, imageQuality]);
 
   // Démarrer l'analyse automatique lorsque la caméra est prête
   useEffect(() => {
@@ -258,8 +297,8 @@ export default function NativeScanScreen() {
             </TouchableOpacity>
           </View>
         </>
-      ) : deviceInitialized ? (
-        // Afficher la caméra
+      ) : deviceInitialized && device ? (
+        // Afficher la caméra avec les nouvelles fonctionnalités
         <>
           <Camera
             ref={camera}
@@ -267,6 +306,7 @@ export default function NativeScanScreen() {
             device={device}
             isActive={!scanned && !processing}
             photo={true}
+            torch={device.hasFlash ? torch : 'off'}
             onError={(error) => {
               console.error('[NativeScanScreen] Erreur de caméra:', error);
               setCameraError(`Erreur de caméra: ${error.message}`);
@@ -274,8 +314,40 @@ export default function NativeScanScreen() {
           />
           
           <View style={styles.overlay}>
-            <View style={styles.scanArea} />
+            {/* Guide visuel amélioré */}
+            <View style={styles.scanArea}>
+              <View style={styles.cornerTopLeft} />
+              <View style={styles.cornerTopRight} />
+              <View style={styles.cornerBottomLeft} />
+              <View style={styles.cornerBottomRight} />
+            </View>
           </View>
+          
+          {/* Contrôles de la caméra - n'afficher le bouton torche que si disponible */}
+          {device && BarcodeScannerService.isTorchAvailable(device) && (
+            <View style={styles.cameraControls}>
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={toggleTorch}
+              >
+                <MaterialCommunityIcons 
+                  name={torch === 'off' ? 'flashlight-off' : 'flashlight'} 
+                  size={24} 
+                  color="white" 
+                />
+                <Text style={styles.controlText}>Torche</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {/* Afficher un message spécial en mode développement */}
+          {__DEV__ && Platform.OS === 'android' && (
+            <View style={styles.devModeContainer}>
+              <Text style={styles.devModeText}>
+                Mode développement: simulation de codes-barres activée
+              </Text>
+            </View>
+          )}
           
           {processing && (
             <View style={styles.processingContainer}>
@@ -354,9 +426,49 @@ const styles = StyleSheet.create({
   scanArea: {
     width: 250,
     height: 250,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderWidth: 0,
     backgroundColor: 'transparent',
+    position: 'relative',
+  },
+  cornerTopLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 30,
+    height: 30,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderColor: '#4CAF50',
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderColor: '#4CAF50',
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 30,
+    height: 30,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderColor: '#4CAF50',
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderColor: '#4CAF50',
   },
   scanAreaSuccess: {
     width: 250,
@@ -409,5 +521,39 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 10,
     borderRadius: 5,
+  },
+  cameraControls: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  controlButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  controlText: {
+    color: 'white',
+    fontSize: 10,
+    marginTop: 4,
+  },
+  devModeContainer: {
+    position: 'absolute',
+    top: 100,
+    width: '100%',
+    backgroundColor: 'rgba(255, 87, 34, 0.8)',
+    padding: 8,
+  },
+  devModeText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
