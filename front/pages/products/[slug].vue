@@ -34,9 +34,28 @@
           <strong>Vendu par:</strong> <a :href="`mailto:${product?.seller?.email}`" class="text-blue-500 underline">{{ product?.seller?.email }}</a>
         </p>
 
+        <!-- QR Code miniature (cliquable) -->
+        <div v-if="product?.product?.code" class="mb-4 cursor-pointer" @click="showBarcodeModal">
+          <p class="text-gray-600 mb-2"><strong>QR Code du produit</strong></p>
+          <div class="inline-block border border-gray-200 p-2 rounded hover:bg-gray-50">
+            <BarcodeGenerator 
+              :value="product.product.code" 
+              :width="100" 
+              :height="100" 
+              :margin="2"
+              errorCorrectionLevel="M"
+            />
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Cliquez sur le QR code pour l'agrandir</p>
+        </div>
+
         <!-- 操作按钮 -->
         <div class="flex space-x-4">
           <el-button type="primary" size="large" @click="addToCart(product)">Ajouter au panier</el-button>
+          <el-button type="info" plain size="large" @click="showBarcodeModal" :disabled="!product?.product?.code">
+            <el-icon class="mr-1"><Document /></el-icon>
+            QR Code
+          </el-button>
           <el-button type="success" @click="open_contact" size="large">Contact Seller</el-button>
         </div>
       </div>
@@ -66,14 +85,25 @@
       </el-form>
     </el-drawer>
 
+    <!-- Modal de code-barres -->
+    <BarcodeModal
+      v-model:visible="barcodeModalVisible"
+      :code="product?.product?.code || ''"
+      :product-name="product?.product?.name || 'Produit'"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import {useCartStore} from "~/stores/cartStore";
+import { Document } from '@element-plus/icons-vue';
+import { useCartStore } from "~/stores/cartStore";
+import { useUserStore } from "~/stores/user";
+import BarcodeGenerator from "~/components/Barcode/BarcodeGenerator.vue";
+import BarcodeModal from "~/components/Barcode/BarcodeModal.vue";
+
 const cartStore = useCartStore();
 const { $axios } = useNuxtApp()
 
@@ -81,10 +111,19 @@ const route = useRoute();
 const product = ref<any>(null); // 产品数据
 
 const drawerVisible = ref<boolean>(false);
+const barcodeModalVisible = ref<boolean>(false);
 
 const open_contact = () => {
   drawerVisible.value = true;
 }
+
+const showBarcodeModal = () => {
+  if (product.value?.product?.code) {
+    barcodeModalVisible.value = true;
+  } else {
+    ElMessage.warning("Ce produit n'a pas de code-barres défini.");
+  }
+};
 
 const form = reactive({
   message: "",

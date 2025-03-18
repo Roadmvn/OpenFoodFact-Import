@@ -27,30 +27,44 @@
             {{ product.product.name }}
           </h3>
           <p class="text-sm text-gray-600 mt-1">
-            <strong>Marque :</strong>
+            <strong>Marque :</strong>
             <span>{{ product.product.brand || "Marque inconnue" }}</span>
           </p>
           <p class="text-sm text-gray-600 mt-1">
-            <strong>Catégories :</strong>
+            <strong>Catégories :</strong>
             <span class="italic">{{ formatCategories(product.product.categories) }}</span>
           </p>
           <p class="text-sm text-gray-600 mt-1">
-            <strong>Prix :</strong>
+            <strong>Prix :</strong>
             {{ product.price }} €
           </p>
           <p class="text-sm text-gray-600 mt-1">
-            <strong>Quantité :</strong>
+            <strong>Quantité :</strong>
             {{ product.quantity }}
           </p>
           <p class="text-sm text-gray-600 mt-1">
-            <strong>Vendeur :</strong>
+            <strong>Vendeur :</strong>
             {{ product.seller.email }}
           </p>
         </div>
 
         <!-- Boutons -->
-        <div class="flex justify-center items-end mt-auto mb-4">
-          <el-button type="primary" class="w-3/4" @click.stop="addToCart(product)">Ajouter au panier</el-button>
+        <div class="flex justify-center items-end mt-auto mb-4 gap-2">
+          <el-button 
+            type="info" 
+            class="w-1/4" 
+            @click.stop="showQRCode(product)"
+            title="Afficher le QR code"
+          >
+            <el-icon><Document /></el-icon>
+          </el-button>
+          <el-button 
+            type="primary" 
+            class="w-3/4" 
+            @click.stop="addToCart(product)"
+          >
+            Ajouter au panier
+          </el-button>
         </div>
       </el-card>
     </div>
@@ -66,12 +80,20 @@
           @current-change="handlePageChange"
       />
     </div>
+
+    <!-- Modal de QR code -->
+    <BarcodeModal
+      v-model:visible="barcodeModalVisible"
+      :code="selectedProductCode"
+      :product-name="selectedProductName"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useCartStore } from "~/stores/cartStore.ts";
+import BarcodeModal from '../Barcode/BarcodeModal.vue';
 
 const cartStore = useCartStore();
 
@@ -79,6 +101,11 @@ const internalProducts = ref([]); // Liste des produits internes pour une page
 const currentPage = ref(1); // Page actuelle
 const pageSize = 20; // Produits par page
 const totalItems = ref(0); // Nombre total de produits internes
+
+// Variables pour le modal de QR code
+const barcodeModalVisible = ref(false);
+const selectedProductCode = ref('');
+const selectedProductName = ref('');
 
 const to_route = (route) => {
   window.location.href = route;
@@ -105,6 +132,14 @@ const handlePageChange = (page) => {
 // Ajouter un produit au panier
 const addToCart = (product) => {
   cartStore.addToCart(product.id)
+};
+
+// Afficher le QR code d'un produit
+const showQRCode = (product) => {
+  // Utiliser le code du produit s'il existe, sinon utiliser l'ID comme fallback
+  selectedProductCode.value = product.product.code || `ID-${product.id}`;
+  selectedProductName.value = product.product.name;
+  barcodeModalVisible.value = true;
 };
 
 // Formater les catégories
