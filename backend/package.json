@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Backend pour l'application OpenFoodFact-Import permettant l'importation et la gestion des données OpenFoodFact",
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.3",
     "axios": "^1.7.9",
@@ -30,7 +30,9 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "sequelize": "^6.37.5",
-    "sequelize-cli": "^6.6.2"
+    "sequelize-cli": "^6.6.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@vitest/ui": "^3.0.5",

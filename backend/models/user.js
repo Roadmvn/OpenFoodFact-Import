@@ -1,6 +1,74 @@
 'use strict';
 const { Model } = require('sequelize');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - firstName
+ *         - lastName
+ *         - email
+ *         - password
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique de l'utilisateur
+ *         firstName:
+ *           type: string
+ *           description: Prénom de l'utilisateur
+ *         lastName:
+ *           type: string
+ *           description: Nom de l'utilisateur
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Email de l'utilisateur (unique)
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: Mot de passe de l'utilisateur (hashé)
+ *         phone:
+ *           type: string
+ *           description: Numéro de téléphone de l'utilisateur
+ *         address:
+ *           type: string
+ *           description: Adresse de l'utilisateur
+ *         zipCode:
+ *           type: string
+ *           description: Code postal de l'utilisateur
+ *         city:
+ *           type: string
+ *           description: Ville de l'utilisateur
+ *         country:
+ *           type: string
+ *           description: Pays de l'utilisateur
+ *         role:
+ *           type: string
+ *           enum: [admin, seller, buyer]
+ *           description: Rôle de l'utilisateur (admin, seller, buyer)
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date de création du compte
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date de dernière mise à jour du compte
+ *       example:
+ *         firstName: Jean
+ *         lastName: Dupont
+ *         email: jean.dupont@example.com
+ *         password: motdepasse123
+ *         phone: "0123456789"
+ *         address: "123 rue de Paris"
+ *         zipCode: "75001"
+ *         city: "Paris"
+ *         country: "France"
+ *         role: buyer
+ */
 module.exports = (sequelize, DataTypes) => {
     class User extends Model {
         static associate(models) {
