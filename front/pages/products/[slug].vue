@@ -50,12 +50,8 @@
         </div>
 
         <!-- 操作按钮 -->
-        <div class="flex space-x-4">
+        <div class="flex space-x-4 product-actions">
           <el-button type="primary" size="large" @click="addToCart(product)">Ajouter au panier</el-button>
-          <el-button type="info" plain size="large" @click="showBarcodeModal" :disabled="!product?.product?.code">
-            <el-icon class="mr-1"><Document /></el-icon>
-            QR Code
-          </el-button>
           <el-button type="success" @click="open_contact" size="large">Contact Seller</el-button>
         </div>
       </div>
@@ -118,12 +114,74 @@ const open_contact = () => {
 }
 
 const showBarcodeModal = () => {
+  console.log('showBarcodeModal called');
   if (product.value?.product?.code) {
+    console.log('Product code found:', product.value.product.code);
     barcodeModalVisible.value = true;
   } else {
+    console.log('No product code found');
     ElMessage.warning("Ce produit n'a pas de code-barres défini.");
   }
 };
+
+// 加载产品数据
+const fetchProduct = async () => {
+  try {
+    const { slug } = route.params; // 从路由中获取 slug
+    const { data } = await $axios.get(`/api/internal-products/products/${slug}`);
+    product.value = data.product;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du produit:", error);
+    ElMessage.error("Échec du chargement du produit.");
+  }
+};
+
+// 加入购物车
+const addToCart = (product: any) => {
+  cartStore.addToCart(product.id,1,product);
+  ElMessage.success("Produit ajouté au panier.");
+};
+
+// 加入愿望清单
+const addToWishlist = () => {
+  ElMessage.success("Produit ajouté à la liste de souhaits.");
+};
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchProduct();
+  
+  // Ajouter un gestionnaire d'événements pour le bouton QR Code
+  setTimeout(() => {
+    const qrCodeButtons = document.querySelectorAll('.el-button--info');
+    console.log('QR Code buttons found:', qrCodeButtons.length);
+    
+    qrCodeButtons.forEach(button => {
+      console.log('Adding click event listener to button:', button);
+      button.addEventListener('click', (event) => {
+        console.log('QR Code button clicked via event listener');
+        event.preventDefault();
+        event.stopPropagation();
+        showBarcodeModal();
+      });
+      
+      // S'assurer que le bouton est cliquable en modifiant son style
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+      button.style.zIndex = '1000';
+    });
+    
+    // Ajouter également un gestionnaire pour le QR code miniature
+    const qrCodeMiniature = document.querySelector('.cursor-pointer');
+    if (qrCodeMiniature) {
+      console.log('QR Code miniature found');
+      qrCodeMiniature.addEventListener('click', () => {
+        console.log('QR Code miniature clicked');
+        showBarcodeModal();
+      });
+    }
+  }, 1000); // Attendre que le DOM soit complètement chargé
+});
 
 const form = reactive({
   message: "",
@@ -158,34 +216,6 @@ const handleSubmit = async () => {
     }
   }
 };
-
-// 加载产品数据
-const fetchProduct = async () => {
-  try {
-    const { slug } = route.params; // 从路由中获取 slug
-    const { data } = await $axios.get(`/api/internal-products/products/${slug}`);
-    product.value = data.product;
-  } catch (error) {
-    console.error("Erreur lors de la récupération du produit:", error);
-    ElMessage.error("Échec du chargement du produit.");
-  }
-};
-
-// 加入购物车
-const addToCart = (product: any) => {
-  cartStore.addToCart(product.id,1,product);
-  ElMessage.success("Produit ajouté au panier.");
-};
-
-// 加入愿望清单
-const addToWishlist = () => {
-  ElMessage.success("Produit ajouté à la liste de souhaits.");
-};
-
-// 页面加载时获取数据
-onMounted(() => {
-  fetchProduct();
-});
 </script>
 
 <style scoped>
