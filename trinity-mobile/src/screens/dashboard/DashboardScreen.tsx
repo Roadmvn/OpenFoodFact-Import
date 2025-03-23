@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, SafeAreaView, Alert, StatusBar, TouchableOpacity, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Text, Appbar, FAB, Avatar, IconButton } from 'react-native-paper';
@@ -8,19 +8,36 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
+import { ProductStorageService } from '../../services/products/ProductStorageService';
 
 const DashboardScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.auth.user);
   const { theme, colorBlindMode } = useTheme();
+  const [scannedCount, setScannedCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   
   // Log pour déboguer le thème
   useEffect(() => {
     console.log('DashboardScreen - Mode daltonien actif:', colorBlindMode);
     console.log('DashboardScreen - Couleur primaire actuelle:', theme.primary);
     console.log('DashboardScreen - Couleur d\'accent actuelle:', theme.accent);
+    
+    // Charger les compteurs au démarrage
+    loadCounters();
   }, [colorBlindMode, theme]);
+
+  // Fonction pour charger les compteurs
+  const loadCounters = async () => {
+    try {
+      const counters = await ProductStorageService.getCounters();
+      setScannedCount(counters.scannedCount);
+      setFavoritesCount(counters.favoritesCount);
+    } catch (error) {
+      console.error('Erreur lors du chargement des compteurs:', error);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -48,6 +65,16 @@ const DashboardScreen = () => {
     navigation.navigate('Scan' as never);
   };
 
+  const handleNativeScanPress = () => {
+    // Navigation vers l'écran de scan natif
+    navigation.navigate('NativeScan' as never);
+  };
+
+  const handleExpoScanPress = () => {
+    // Navigation vers l'écran de scan Expo
+    navigation.navigate('ExpoScan' as never);
+  };
+
   const handleProfilePress = () => {
     navigation.navigate('Profile' as never);
   };
@@ -60,10 +87,23 @@ const DashboardScreen = () => {
     navigation.navigate('OrderHistory' as never);
   };
 
+  const handleScannedProductsPress = () => {
+    navigation.navigate('ScannedProducts' as never);
+  };
+
+  const handleFavoritesPress = () => {
+    navigation.navigate('FavoriteProducts' as never);
+  };
+
   // Fonction pour obtenir les initiales de l'utilisateur
   const getUserInitials = () => {
     if (!user) return '';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase() || user.username.substring(0, 2).toUpperCase();
+  };
+
+  // Vérifier si nous sommes dans Expo Go
+  const isInExpoGo = () => {
+    return !__DEV__ || process.env.EXPO_ENVIRONMENT === 'expo';
   };
 
   return (
@@ -190,15 +230,21 @@ const DashboardScreen = () => {
                   delay={500}
                   style={[styles.statBox, { backgroundColor: theme.background }]}
                 >
-                  <LinearGradient
-                    colors={theme.cardGradient}
-                    style={styles.statCircle}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                  <TouchableOpacity 
+                    style={styles.statTouchable}
+                    onPress={handleScannedProductsPress}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.statNumber}>0</Text>
-                  </LinearGradient>
-                  <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Produits scannés</Text>
+                    <LinearGradient
+                      colors={theme.cardGradient}
+                      style={styles.statCircle}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Text style={styles.statNumber}>{scannedCount}</Text>
+                    </LinearGradient>
+                    <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Produits scannés</Text>
+                  </TouchableOpacity>
                 </Animatable.View>
                 
                 <Animatable.View 
@@ -207,15 +253,21 @@ const DashboardScreen = () => {
                   delay={700}
                   style={[styles.statBox, { backgroundColor: theme.background }]}
                 >
-                  <LinearGradient
-                    colors={theme.cardGradient}
-                    style={styles.statCircle}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                  <TouchableOpacity 
+                    style={styles.statTouchable}
+                    onPress={handleFavoritesPress}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.statNumber}>0</Text>
-                  </LinearGradient>
-                  <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Favoris</Text>
+                    <LinearGradient
+                      colors={theme.cardGradient}
+                      style={styles.statCircle}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Text style={styles.statNumber}>{favoritesCount}</Text>
+                    </LinearGradient>
+                    <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Favoris</Text>
+                  </TouchableOpacity>
                 </Animatable.View>
               </Animatable.View>
             </Animatable.View>
@@ -224,24 +276,67 @@ const DashboardScreen = () => {
           )}
         </View>
 
-        <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
-          <TouchableOpacity
-            style={styles.fabContainer}
-            onPress={handleScanPress}
-            accessibilityLabel="Scanner un produit"
-            accessibilityHint="Ouvrir la caméra pour scanner un code-barres"
-          >
-            <LinearGradient
-              colors={theme.accentGradient}
-              style={styles.fab}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+        <View style={styles.scanButtonsContainer}>
+          <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
+            <TouchableOpacity
+              style={styles.fabContainer}
+              onPress={handleScanPress}
+              accessibilityLabel="Scanner un produit"
+              accessibilityHint="Ouvrir la caméra pour scanner un code-barres"
             >
-              <IconButton icon="barcode-scan" color="#FFFFFF" size={30} />
-            </LinearGradient>
-            <Text style={styles.fabLabel}>Scanner</Text>
-          </TouchableOpacity>
-        </Animatable.View>
+              <LinearGradient
+                colors={theme.accentGradient}
+                style={styles.fab}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <IconButton icon="barcode-scan" color="#FFFFFF" size={30} />
+              </LinearGradient>
+              <Text style={styles.fabLabel}>Scanner</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
+          {/* N'afficher ce bouton que si nous ne sommes pas dans Expo Go */}
+          {!isInExpoGo() && (
+            <Animatable.View animation="pulse" delay={300} easing="ease-out" iterationCount="infinite">
+              <TouchableOpacity
+                style={styles.fabContainer}
+                onPress={handleNativeScanPress}
+                accessibilityLabel="Scanner natif un produit"
+                accessibilityHint="Ouvrir le scanner natif de la caméra"
+              >
+                <LinearGradient
+                  colors={theme.accentGradient}
+                  style={styles.fab}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <IconButton icon="camera" color="#FFFFFF" size={30} />
+                </LinearGradient>
+                <Text style={styles.fabLabel}>Scanner Natif</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
+
+          <Animatable.View animation="pulse" delay={600} easing="ease-out" iterationCount="infinite">
+            <TouchableOpacity
+              style={styles.fabContainer}
+              onPress={handleExpoScanPress}
+              accessibilityLabel="Scanner Expo un produit"
+              accessibilityHint="Ouvrir le scanner Expo compatible avec Expo Go"
+            >
+              <LinearGradient
+                colors={theme.accentGradient}
+                style={styles.fab}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <IconButton icon="qrcode-scan" color="#FFFFFF" size={30} />
+              </LinearGradient>
+              <Text style={styles.fabLabel}>Scanner Expo</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -257,8 +352,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
     paddingBottom: 10,
+    paddingHorizontal: 16,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -266,10 +362,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   headerContent: {
-    padding: 16,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   titleContainer: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   titleText: {
     fontSize: 24,
@@ -282,16 +379,15 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    width: '100%',
   },
   headerButton: {
     alignItems: 'center',
-    width: 90,
+    marginHorizontal: 4,
   },
   buttonGradient: {
-    borderRadius: 25,
-    padding: 5,
-    marginBottom: 5,
+    borderRadius: 20,
+    padding: 2,
   },
   buttonLabel: {
     fontSize: 12,
@@ -302,16 +398,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   userInfoContainer: {
-    padding: 16,
     borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     marginBottom: 20,
-    elevation: 3,
   },
   userHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   avatarContainer: {
     borderRadius: 30,
@@ -322,28 +417,24 @@ const styles = StyleSheet.create({
   },
   userTextContainer: {
     marginLeft: 16,
-    flex: 1,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   emailText: {
     fontSize: 14,
-    marginBottom: 8,
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   statBox: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 4,
-    elevation: 2,
+    borderRadius: 8,
+    padding: 12,
+    width: '45%',
   },
   statCircle: {
     width: 60,
@@ -354,23 +445,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   statLabel: {
-    fontSize: 12,
-    textAlign: 'center',
+    fontSize: 14,
   },
   errorText: {
     fontSize: 16,
     textAlign: 'center',
   },
+  scanButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingBottom: 20,
+  },
   fabContainer: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
     alignItems: 'center',
+    marginBottom: 20,
   },
   fab: {
     width: 60,
@@ -378,16 +471,20 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowRadius: 5,
   },
   fabLabel: {
-    marginTop: 5,
-    fontSize: 12,
+    marginTop: 8,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
+  },
+  statTouchable: {
+    alignItems: 'center',
+    width: '100%',
   },
 });

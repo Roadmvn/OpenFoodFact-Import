@@ -8,6 +8,8 @@ const session = require('express-session');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const { sequelize } = require('./models');
 const routes = require('./routes');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
 
 const app = express();
 
@@ -79,6 +81,14 @@ sequelize.sync().then(() => {
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
 
+    // Configuration de Swagger
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+        explorer: true,
+        swaggerOptions: {
+            docExpansion: 'none' // Toutes les sections sont fermées par défaut
+        }
+    }));
+
     // Configuration des routes
     app.use('/auth', authRoutes);
     app.use('/api', routes);
@@ -98,6 +108,7 @@ sequelize.sync().then(() => {
     const server = app.listen(PORT, () => {
         console.log(`Le serveur est en cours d'exécution sur : http://localhost:${PORT}`);
         console.log(`Pour Android, utilisez : http://10.0.2.2:${PORT}`);
+        console.log(`Documentation API Swagger : http://localhost:${PORT}/api-docs`);
     });
         
     server.on('error', (error) => {

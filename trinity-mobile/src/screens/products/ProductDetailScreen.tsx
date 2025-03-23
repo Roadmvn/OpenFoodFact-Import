@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ProductService, { ProductData } from '../../services/auth/product/productService';
 import CartService, { CartItem } from '../../services/cart/cartService';
 import { useTheme } from '../../context/ThemeContext';
+import { ProductStorageService } from '../../services/products/ProductStorageService';
 
 // Définition du type pour la navigation
 type RootStackParamList = {
@@ -20,6 +21,7 @@ const ProductDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
   
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
@@ -32,6 +34,38 @@ const ProductDetailScreen = () => {
     console.log('ProductDetailScreen - Couleur primaire actuelle:', theme.primary);
     console.log('ProductDetailScreen - Couleur d\'accent actuelle:', theme.accent);
   }, [colorBlindMode, theme]);
+
+  // Vérifier si le produit est dans les favoris au chargement
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const isInFavorites = await ProductStorageService.isProductFavorite(barcode);
+        setIsFavorite(isInFavorites);
+      } catch (error) {
+        console.error('Erreur lors de la vérification du statut de favori:', error);
+      }
+    };
+    
+    checkFavoriteStatus();
+  }, [barcode]);
+  
+  // Fonction pour gérer l'ajout/suppression des favoris
+  const handleToggleFavorite = async () => {
+    if (!product) return;
+    
+    try {
+      const result = await ProductStorageService.toggleFavoriteProduct({
+        id: barcode,
+        name: product.product.product_name || `Produit ${barcode.substring(0, 6)}...`,
+        image: product.product.image_url,
+        date: Date.now()
+      });
+      
+      setIsFavorite(result);
+    } catch (error) {
+      console.error('Erreur lors de la modification des favoris:', error);
+    }
+  };
   
   // Fonction pour ajouter le produit au panier
   const handleAddToCart = async () => {
@@ -135,7 +169,7 @@ const ProductDetailScreen = () => {
   }, [barcode]);
   
   const renderNutrientItem = (label: string, value: string | number | undefined, unit: string = '') => (
-    <View style={styles.nutrientItem}>
+    <View style={[styles.nutrientItem, { borderBottomColor: theme.border }]}>
       <Text style={[styles.nutrientLabel, { color: theme.text }]}>{label}</Text>
       <Text style={[styles.nutrientValue, { color: theme.textSecondary }]}>{value || 'N/A'} {unit}</Text>
     </View>
@@ -204,7 +238,7 @@ const ProductDetailScreen = () => {
           
           <View style={[styles.sectionContainer, { backgroundColor: theme.card }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Valeurs nutritionnelles (pour 100g)</Text>
-            <View style={styles.nutrientsContainer}>
+            <View style={[styles.nutrientsContainer, { borderTopColor: theme.border }]}>
               {renderNutrientItem('Énergie', product.product.nutriments.energy_100g, 'kcal')}
               {renderNutrientItem('Matières grasses', product.product.nutriments.fat_100g, 'g')}
               {renderNutrientItem('Dont acides gras saturés', product.product.nutriments.saturated_fat_100g, 'g')}
@@ -222,14 +256,35 @@ const ProductDetailScreen = () => {
             </View>
           )}
           
-          <TouchableOpacity 
-            style={[styles.addToCartButton, { backgroundColor: theme.accent }]}
-            activeOpacity={0.8}
-            onPress={handleAddToCart}
-          >
-            <Ionicons name="cart" size={24} color="#FFFFFF" style={styles.cartIcon} />
-            <Text style={styles.addToCartText}>Ajouter au panier</Text>
-          </TouchableOpacity>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity 
+              style={[styles.favoriteButton, { 
+                backgroundColor: isFavorite ? '#E53935' : theme.background,
+                borderColor: isFavorite ? '#E53935' : theme.border
+              }]}
+              activeOpacity={0.8}
+              onPress={handleToggleFavorite}
+            >
+              <Ionicons 
+                name={isFavorite ? "heart" : "heart-outline"} 
+                size={24} 
+                color={isFavorite ? "#FFFFFF" : '#E53935'} 
+                style={styles.favoriteIcon} 
+              />
+              <Text style={[styles.favoriteText, { color: isFavorite ? "#FFFFFF" : theme.text }]}>
+                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.addToCartButton, { backgroundColor: theme.accent }]}
+              activeOpacity={0.8}
+              onPress={handleAddToCart}
+            >
+              <Ionicons name="cart" size={24} color="#FFFFFF" style={styles.cartIcon} />
+              <Text style={styles.addToCartText}>Ajouter au panier</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       ) : (
         <View style={styles.errorContainer}>
@@ -370,14 +425,14 @@ const styles = StyleSheet.create({
   },
   nutrientsContainer: {
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: theme => theme.border,
   },
   nutrientItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme => theme.border,
   },
   nutrientLabel: {
     fontSize: 14,
@@ -390,23 +445,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  actionsContainer: {
+    width: '100%',
+    paddingHorizontal: 15,
+    paddingBottom: 20,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  favoriteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 8,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  favoriteIcon: {
+    marginRight: 10,
+  },
+  favoriteText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   addToCartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 15,
     borderRadius: 8,
-    margin: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    width: '100%',
   },
   cartIcon: {
     marginRight: 10,
   },
   addToCartText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -34,8 +34,23 @@
           <strong>Vendu par:</strong> <a :href="`mailto:${product?.seller?.email}`" class="text-blue-500 underline">{{ product?.seller?.email }}</a>
         </p>
 
+        <!-- QR Code miniature (cliquable) -->
+        <div v-if="product?.product?.code" class="mb-4 cursor-pointer" @click="showBarcodeModal">
+          <p class="text-gray-600 mb-2"><strong>QR Code du produit</strong></p>
+          <div class="inline-block border border-gray-200 p-2 rounded hover:bg-gray-50">
+            <BarcodeGenerator 
+              :value="product.product.code" 
+              :width="100" 
+              :height="100" 
+              :margin="2"
+              errorCorrectionLevel="M"
+            />
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Cliquez sur le QR code pour l'agrandir</p>
+        </div>
+
         <!-- 操作按钮 -->
-        <div class="flex space-x-4">
+        <div class="flex space-x-4 product-actions">
           <el-button type="primary" size="large" @click="addToCart(product)">Ajouter au panier</el-button>
           <el-button type="success" @click="open_contact" size="large">Contact Seller</el-button>
         </div>
@@ -66,14 +81,25 @@
       </el-form>
     </el-drawer>
 
+    <!-- Modal de code-barres -->
+    <BarcodeModal
+      v-model:visible="barcodeModalVisible"
+      :code="product?.product?.code || ''"
+      :product-name="product?.product?.name || 'Produit'"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import {useCartStore} from "~/stores/cartStore";
+import { Document } from '@element-plus/icons-vue';
+import { useCartStore } from "~/stores/cartStore";
+import { useUserStore } from "~/stores/user";
+import BarcodeGenerator from "~/components/Barcode/BarcodeGenerator.vue";
+import BarcodeModal from "~/components/Barcode/BarcodeModal.vue";
+
 const cartStore = useCartStore();
 const { $axios } = useNuxtApp()
 
@@ -81,10 +107,81 @@ const route = useRoute();
 const product = ref<any>(null); // 产品数据
 
 const drawerVisible = ref<boolean>(false);
+const barcodeModalVisible = ref<boolean>(false);
 
 const open_contact = () => {
   drawerVisible.value = true;
 }
+
+const showBarcodeModal = () => {
+  console.log('showBarcodeModal called');
+  if (product.value?.product?.code) {
+    console.log('Product code found:', product.value.product.code);
+    barcodeModalVisible.value = true;
+  } else {
+    console.log('No product code found');
+    ElMessage.warning("Ce produit n'a pas de code-barres défini.");
+  }
+};
+
+// 加载产品数据
+const fetchProduct = async () => {
+  try {
+    const { slug } = route.params; // 从路由中获取 slug
+    const { data } = await $axios.get(`/api/internal-products/products/${slug}`);
+    product.value = data.product;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du produit:", error);
+    ElMessage.error("Échec du chargement du produit.");
+  }
+};
+
+// 加入购物车
+const addToCart = (product: any) => {
+  cartStore.addToCart(product.id,1,product);
+  ElMessage.success("Produit ajouté au panier.");
+};
+
+// 加入愿望清单
+const addToWishlist = () => {
+  ElMessage.success("Produit ajouté à la liste de souhaits.");
+};
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchProduct();
+  
+  // Ajouter un gestionnaire d'événements pour le bouton QR Code
+  setTimeout(() => {
+    const qrCodeButtons = document.querySelectorAll('.el-button--info');
+    console.log('QR Code buttons found:', qrCodeButtons.length);
+    
+    qrCodeButtons.forEach(button => {
+      console.log('Adding click event listener to button:', button);
+      button.addEventListener('click', (event) => {
+        console.log('QR Code button clicked via event listener');
+        event.preventDefault();
+        event.stopPropagation();
+        showBarcodeModal();
+      });
+      
+      // S'assurer que le bouton est cliquable en modifiant son style
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+      button.style.zIndex = '1000';
+    });
+    
+    // Ajouter également un gestionnaire pour le QR code miniature
+    const qrCodeMiniature = document.querySelector('.cursor-pointer');
+    if (qrCodeMiniature) {
+      console.log('QR Code miniature found');
+      qrCodeMiniature.addEventListener('click', () => {
+        console.log('QR Code miniature clicked');
+        showBarcodeModal();
+      });
+    }
+  }, 1000); // Attendre que le DOM soit complètement chargé
+});
 
 const form = reactive({
   message: "",
@@ -119,34 +216,6 @@ const handleSubmit = async () => {
     }
   }
 };
-
-// 加载产品数据
-const fetchProduct = async () => {
-  try {
-    const { slug } = route.params; // 从路由中获取 slug
-    const { data } = await $axios.get(`/api/internal-products/products/${slug}`);
-    product.value = data.product;
-  } catch (error) {
-    console.error("Erreur lors de la récupération du produit:", error);
-    ElMessage.error("Échec du chargement du produit.");
-  }
-};
-
-// 加入购物车
-const addToCart = (product: any) => {
-  cartStore.addToCart(product.id,1,product);
-  ElMessage.success("Produit ajouté au panier.");
-};
-
-// 加入愿望清单
-const addToWishlist = () => {
-  ElMessage.success("Produit ajouté à la liste de souhaits.");
-};
-
-// 页面加载时获取数据
-onMounted(() => {
-  fetchProduct();
-});
 </script>
 
 <style scoped>

@@ -7,14 +7,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginRequest } from '../../store/slices/authSlice';
+import { loginRequest, googleLoginRequest, googleLoginSuccess, googleLoginFailure } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import GoogleAuthService from '../../services/auth/googleAuthService';
+import * as SecureStore from 'expo-secure-store';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -23,6 +26,7 @@ type LoginScreenProps = {
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
   const { theme, colorBlindMode } = useTheme();
@@ -41,9 +45,72 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     dispatch(loginRequest({ email, password }));
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+      dispatch(googleLoginRequest());
+      
+      const userData = await GoogleAuthService.login();
+      
+      if (userData) {
+        // Construire un objet de réponse similaire à celui attendu par googleLoginSuccess
+        const response = {
+          user: {
+            id: userData.id.toString(),
+            email: userData.email,
+            firstName: userData.name?.split(' ')[0] || '',
+            lastName: userData.name?.split(' ')[1] || '',
+          },
+          token: await SecureStore.getItemAsync('userToken') || '',
+          message: 'Connexion Google réussie'
+        };
+        
+        dispatch(googleLoginSuccess(response));
+        // Redirection vers l'écran principal
+        navigation.navigate('Main');
+      } else {
+        dispatch(googleLoginFailure('Échec de la connexion avec Google'));
+      }
+    } catch (error) {
+      console.error('Erreur lors de la connexion Google:', error);
+      dispatch(googleLoginFailure('Erreur lors de la connexion avec Google'));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleAccessibilityPress = () => {
     navigation.navigate('Accessibility');
   };
+
+  // Fonction pour obtenir les couleurs du dégradé en fonction du mode daltonien
+  const getGradientColors = () => {
+    if (colorBlindMode) {
+      // Dégradé adapté pour les daltoniens (bleu à orange)
+      return ['#0C7BDC', '#E66100'] as const;
+    } else {
+      // Dégradé bleu-vert comme dans les options visuelles
+      return ['#4A90E2', '#4CAF50'] as const;
+    }
+  };
+
+  // Fonction pour obtenir les styles du bouton Google en fonction du mode daltonien
+  const getGoogleButtonStyles = () => {
+    if (colorBlindMode) {
+      return {
+        borderColor: '#0C7BDC',
+        textColor: '#0C7BDC'
+      };
+    } else {
+      return {
+        borderColor: '#dadce0',
+        textColor: '#3c4043'
+      };
+    }
+  };
+
+  // Récupérer les styles pour le bouton Google
+  const googleButtonStyles = getGoogleButtonStyles();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -88,7 +155,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           disabled={loading}
         >
           <LinearGradient
-            colors={theme.buttonGradient}
+            colors={getGradientColors()}
             style={styles.buttonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -99,6 +166,33 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               <Text style={styles.buttonText}>Se connecter</Text>
             )}
           </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Séparateur */}
+        <View style={styles.separator}>
+          <View style={styles.separatorLine} />
+          <Text style={[styles.separatorText, { color: theme.textSecondary }]}>OU</Text>
+          <View style={styles.separatorLine} />
+        </View>
+
+        {/* Bouton Google */}
+        <TouchableOpacity 
+          style={[styles.googleButton, { borderColor: googleButtonStyles.borderColor }]} 
+          onPress={handleGoogleLogin}
+          disabled={googleLoading}
+        >
+          <View style={styles.googleButtonContent}>
+            <Image 
+              source={require('../../../assets/google-icon.png')} 
+              style={styles.googleIcon}
+              resizeMode="contain"
+            />
+            {googleLoading ? (
+              <ActivityIndicator color="#4285F4" />
+            ) : (
+              <Text style={[styles.googleButtonText, { color: googleButtonStyles.textColor }]}>{googleLoading ? '' : 'Se connecter avec Google'}</Text>
+            )}
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -177,5 +271,49 @@ const styles = StyleSheet.create({
   accessibilityText: {
     marginLeft: 5,
     fontWeight: '500',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 20,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+  },
+  separatorText: {
+    marginHorizontal: 10,
+  },
+  googleButton: {
+    height: 50,
+    borderRadius: 4,
+    marginTop: 10,
+    overflow: 'hidden',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+  },
+  googleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    paddingHorizontal: 12,
+  },
+  googleIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0.25,
   },
 });

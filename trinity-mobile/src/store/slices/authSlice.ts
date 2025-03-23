@@ -1,7 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, LoginCredentials, LoginResponse, RegisterCredentials, UpdateUserProfileRequest, User } from '../types/auth';
 
-const initialState: AuthState = {
+// Mise à jour de l'interface AuthState pour inclure registerSuccess
+interface ExtendedAuthState extends AuthState {
+  registerSuccess: boolean;
+}
+
+const initialState: ExtendedAuthState = {
   user: null,
   token: null,
   loading: false,
@@ -71,6 +76,21 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    // Actions pour l'authentification Google
+    googleLoginRequest: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    googleLoginSuccess: (state, action: PayloadAction<LoginResponse>) => {
+      state.loading = false;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.error = null;
+    },
+    googleLoginFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -88,6 +108,9 @@ export const {
   updateProfileRequest,
   updateProfileSuccess,
   updateProfileFailure,
+  googleLoginRequest,
+  googleLoginSuccess,
+  googleLoginFailure,
 } = authSlice.actions;
 
 export default authSlice.reducer;

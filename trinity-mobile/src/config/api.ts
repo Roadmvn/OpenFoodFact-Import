@@ -1,28 +1,19 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_PORT = 3001; // Correspond au port du backend
+// Récupérer le port API depuis les variables d'environnement
+const API_PORT = process.env.API_PORT || Constants.expoConfig?.extra?.API_PORT || 3001;
 
-// L'URL de base change selon la plateforme
+// Adresse IP de votre PC lorsqu'il est connecté au partage de connexion
+const HOTSPOT_IP = '192.168.1.96'; // Adresse IP actuelle de votre PC sur le partage de connexion
+
+// L'URL de base pour l'API
 const getBaseUrl = () => {
-  if (Platform.OS === 'android') {
-    // Pour l'émulateur Android, utiliser 10.0.2.2
-    // Pour un appareil physique, utiliser l'adresse IP de votre machine
-    // Détecter si on est sur un émulateur ou un appareil physique
-    const isEmulator = false; // À modifier selon votre environnement
-    
-    return isEmulator 
-      ? `http://10.0.2.2:${API_PORT}`
-      : `http://10.188.177.128:${API_PORT}`; // Remplacer par l'adresse IP de votre machine
-  } else if (Platform.OS === 'ios') {
-    // Pour l'émulateur iOS
-    return `http://localhost:${API_PORT}`;
-  } else {
-    // Pour le web ou autre
-    return `http://localhost:${API_PORT}`;
-  }
+  // Pour le développement, utiliser l'adresse IP du partage de connexion
+  return `http://${HOTSPOT_IP}:${API_PORT}`;
 };
 
 export const API_URL = getBaseUrl();
 
 // Pour le débogage
-console.log(`API_URL configurée: ${API_URL}`);
+console.log(`API_URL configurée: ${API_URL} (port: ${API_PORT})`);

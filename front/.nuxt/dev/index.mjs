@@ -3,30 +3,30 @@ import { Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parentPort, threadId } from 'node:worker_threads';
-import { getRequestHeader, splitCookiesString, setResponseStatus, setResponseHeader, send, getRequestHeaders, defineEventHandler, handleCacheHeaders, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, sendRedirect, proxyRequest, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, setResponseHeaders, createError, getRouterParam, readBody, getQuery as getQuery$1, getResponseStatusText } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/h3/dist/index.mjs';
-import { getRequestDependencies, getPreloadLinks, getPrefetchLinks, createRenderer } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/vue-bundle-renderer/dist/runtime.mjs';
-import { stringify, uneval } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/devalue/index.js';
-import destr from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/destr/dist/index.mjs';
-import { withQuery, joinURL, withTrailingSlash, parseURL, withoutBase, getQuery, joinRelativeURL } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/ufo/dist/index.mjs';
-import { renderToString } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/vue/server-renderer/index.mjs';
-import { propsToString, renderSSRHead } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/@unhead/ssr/dist/index.mjs';
-import { createServerHead as createServerHead$1, CapoPlugin } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/unhead/dist/index.mjs';
-import { klona } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/klona/dist/index.mjs';
-import defu, { defuFn } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/defu/dist/defu.mjs';
-import { snakeCase } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/scule/dist/index.mjs';
-import { createHooks } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/hookable/dist/index.mjs';
-import { createFetch as createFetch$1, Headers as Headers$1 } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/ofetch/dist/node.mjs';
-import { createCall, createFetch } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/unenv/runtime/fetch/index.mjs';
+import { getRequestHeader, splitCookiesString, setResponseStatus, setResponseHeader, send, getRequestHeaders, defineEventHandler, handleCacheHeaders, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, sendRedirect, proxyRequest, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, setResponseHeaders, createError, getRouterParam, readBody, getQuery as getQuery$1, getResponseStatusText } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/h3/dist/index.mjs';
+import { getRequestDependencies, getPreloadLinks, getPrefetchLinks, createRenderer } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/vue-bundle-renderer/dist/runtime.mjs';
+import { stringify, uneval } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/devalue/index.js';
+import destr from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/destr/dist/index.mjs';
+import { withQuery, joinURL, withTrailingSlash, parseURL, withoutBase, getQuery, joinRelativeURL } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/ufo/dist/index.mjs';
+import { renderToString } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/vue/server-renderer/index.mjs';
+import { propsToString, renderSSRHead } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/@unhead/ssr/dist/index.mjs';
+import { createServerHead as createServerHead$1, CapoPlugin } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/unhead/dist/index.mjs';
+import { klona } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/klona/dist/index.mjs';
+import defu, { defuFn } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/defu/dist/defu.mjs';
+import { snakeCase } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/scule/dist/index.mjs';
+import { createHooks } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/hookable/dist/index.mjs';
+import { createFetch as createFetch$1, Headers as Headers$1 } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/ofetch/dist/node.mjs';
+import { createCall, createFetch } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/unenv/runtime/fetch/index.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { consola } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/consola/dist/index.mjs';
-import { getContext } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/unctx/dist/index.mjs';
-import { captureRawStackTrace, parseRawStackTrace } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/errx/dist/index.js';
-import { isVNode, unref, version } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/vue/index.mjs';
-import { hash } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/ohash/dist/index.mjs';
-import { createStorage, prefixStorage } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/unstorage/dist/index.mjs';
-import unstorage_47drivers_47fs from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/unstorage/drivers/fs.mjs';
-import { toRouteMatcher, createRouter } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/radix3/dist/index.mjs';
-import { defineHeadPlugin } from 'file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/node_modules/@unhead/shared/dist/index.mjs';
+import { consola } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/consola/dist/index.mjs';
+import { getContext } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/unctx/dist/index.mjs';
+import { captureRawStackTrace, parseRawStackTrace } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/errx/dist/index.js';
+import { isVNode, unref, version } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/vue/index.mjs';
+import { hash } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/ohash/dist/index.mjs';
+import { createStorage, prefixStorage } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/unstorage/dist/index.mjs';
+import unstorage_47drivers_47fs from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/unstorage/drivers/fs.mjs';
+import { toRouteMatcher, createRouter } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/radix3/dist/index.mjs';
+import { defineHeadPlugin } from 'file://C:/Users/tudyg/projet/T-DEV-702-Api/front/node_modules/@unhead/shared/dist/index.mjs';
 
 function hasReqHeader(event, name, includes) {
   const value = getRequestHeader(event, name);
@@ -172,13 +172,13 @@ if (!window.__NUXT_DEVTOOLS_TIME_METRIC__) {
 window.__NUXT_DEVTOOLS_TIME_METRIC__.appInit = Date.now()
 `;
 
-const _ryGbLuo6Wr = (function(nitro) {
+const _HBP4HY12wv = (function(nitro) {
   nitro.hooks.hook("render:html", (htmlContext) => {
     htmlContext.head.push(`<script>${script}<\/script>`);
   });
 });
 
-const rootDir = "C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front";
+const rootDir = "C:/Users/tudyg/projet/T-DEV-702-Api/front";
 
 const appHead = {"meta":[{"name":"viewport","content":"width=device-width, initial-scale=1"},{"charset":"utf-8"}],"link":[],"style":[],"script":[],"noscript":[]};
 
@@ -197,7 +197,7 @@ const devReducers = {
   URL: (data) => data instanceof URL ? data.toString() : undefined
 };
 const asyncContext = getContext("nuxt-dev", { asyncContext: true, AsyncLocalStorage });
-const _GuKdSzbfl4 = (nitroApp) => {
+const _zoJ21IHpk6 = (nitroApp) => {
   const handler = nitroApp.h3App.handler;
   nitroApp.h3App.handler = (event) => {
     return asyncContext.callAsync({ logs: [], event }, () => handler(event));
@@ -267,18 +267,18 @@ function onConsoleLog(callback) {
 }
 
 const plugins = [
-  _ryGbLuo6Wr,
-_GuKdSzbfl4
+  _HBP4HY12wv,
+_zoJ21IHpk6
 ];
 
-const _lazy_O5Zb8Z = () => Promise.resolve().then(function () { return renderer$1; });
+const _lazy_lzk0sF = () => Promise.resolve().then(function () { return renderer$1; });
 
 const handlers = [
-  { route: '/__nuxt_error', handler: _lazy_O5Zb8Z, lazy: true, middleware: false, method: undefined },
-  { route: '/**', handler: _lazy_O5Zb8Z, lazy: true, middleware: false, method: undefined }
+  { route: '/__nuxt_error', handler: _lazy_lzk0sF, lazy: true, middleware: false, method: undefined },
+  { route: '/**', handler: _lazy_lzk0sF, lazy: true, middleware: false, method: undefined }
 ];
 
-const serverAssets = [{"baseName":"server","dir":"C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/server/assets"}];
+const serverAssets = [{"baseName":"server","dir":"C:/Users/tudyg/projet/T-DEV-702-Api/front/server/assets"}];
 
 const assets = createStorage();
 
@@ -290,11 +290,11 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets);
 
-storage.mount('root', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:\\Users\\Nat-ryo\\Desktop\\T-DEV-703-Mobile\\front","ignore":["**/node_modules/**","**/.git/**"]}));
-storage.mount('src', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:\\Users\\Nat-ryo\\Desktop\\T-DEV-703-Mobile\\front\\server","ignore":["**/node_modules/**","**/.git/**"]}));
-storage.mount('build', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:\\Users\\Nat-ryo\\Desktop\\T-DEV-703-Mobile\\front\\.nuxt","ignore":["**/node_modules/**","**/.git/**"]}));
-storage.mount('cache', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:\\Users\\Nat-ryo\\Desktop\\T-DEV-703-Mobile\\front\\.nuxt\\cache","ignore":["**/node_modules/**","**/.git/**"]}));
-storage.mount('data', unstorage_47drivers_47fs({"driver":"fs","base":"C:\\Users\\Nat-ryo\\Desktop\\T-DEV-703-Mobile\\front\\.data\\kv","ignore":["**/node_modules/**","**/.git/**"]}));
+storage.mount('root', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:\\Users\\tudyg\\projet\\T-DEV-702-Api\\front","ignore":["**/node_modules/**","**/.git/**"]}));
+storage.mount('src', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:\\Users\\tudyg\\projet\\T-DEV-702-Api\\front\\server","ignore":["**/node_modules/**","**/.git/**"]}));
+storage.mount('build', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:\\Users\\tudyg\\projet\\T-DEV-702-Api\\front\\.nuxt","ignore":["**/node_modules/**","**/.git/**"]}));
+storage.mount('cache', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:\\Users\\tudyg\\projet\\T-DEV-702-Api\\front\\.nuxt\\cache","ignore":["**/node_modules/**","**/.git/**"]}));
+storage.mount('data', unstorage_47drivers_47fs({"driver":"fs","base":"C:\\Users\\tudyg\\projet\\T-DEV-702-Api\\front\\.data\\kv","ignore":["**/node_modules/**","**/.git/**"]}));
 
 function useStorage(base = "") {
   return base ? prefixStorage(storage, base) : storage;
@@ -1166,8 +1166,8 @@ function publicAssetsURL(...path) {
 
 globalThis.__buildAssetsURL = buildAssetsURL;
 globalThis.__publicAssetsURL = publicAssetsURL;
-const getClientManifest = () => import('file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/.nuxt/dist/server/client.manifest.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
-const getServerEntry = () => import('file://C:/Users/Nat-ryo/Desktop/T-DEV-703-Mobile/front/.nuxt/dist/server/server.mjs').then((r) => r.default || r);
+const getClientManifest = () => import('file://C:/Users/tudyg/projet/T-DEV-702-Api/front/.nuxt/dist/server/client.manifest.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
+const getServerEntry = () => import('file://C:/Users/tudyg/projet/T-DEV-702-Api/front/.nuxt/dist/server/server.mjs').then((r) => r.default || r);
 const getSSRStyles = lazyCachedFunction(() => Promise.resolve().then(function () { return styles$1; }).then((r) => r.default || r));
 const getSSRRenderer = lazyCachedFunction(async () => {
   const manifest = await getClientManifest();

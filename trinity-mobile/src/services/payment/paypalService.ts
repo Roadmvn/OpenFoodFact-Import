@@ -27,8 +27,8 @@ export interface CaptureOrderResponse {
 }
 
 // Configuration pour le mode développement
-const DEV_MODE = true; // Mettre à true pour simuler les réponses sans appeler l'API
-const DEBUG_MODE = true; // Mettre à true pour afficher les logs détaillés
+const DEV_MODE = false; // Mettre à false pour utiliser l'API réelle
+const DEBUG_MODE = true; // Garder à true pour le débogage pendant les tests
 
 class PaypalService {
   /**
@@ -62,21 +62,64 @@ class PaypalService {
       }
       
       // Création de la commande dans notre backend
-      const orderResponse = await axios.post(`${API_URL}/api/orders`, {
-        buyerId: userId,
-        items: cartItems.map(item => ({
-          internalProductId: item.internalProductId, // ID du produit interne
-          quantity: item.quantity,
-          price: item.price,
-          sellerId: item.sellerId
-        })),
-        totalAmount
-      });
+      let localOrderId;
+      try {
+        // Préparer les données de la commande
+        const orderData = {
+          buyerId: userId,
+          items: cartItems.map(item => ({
+            internalProductId: item.internalProductId, // ID du produit interne
+            quantity: item.quantity,
+            price: item.price,
+            sellerId: item.sellerId
+          })),
+          totalAmount
+        };
+        
+        if (DEBUG_MODE) {
+          console.log(`[PaypalService] Données de la commande locale:`, JSON.stringify(orderData));
+          console.log(`[PaypalService] User ID utilisé:`, userId);
+          console.log(`[PaypalService] Nombre d'articles:`, cartItems.length);
+        }
+        
+        // Envoyer la requête pour créer la commande locale
+        const orderResponse = await axios.post(`${API_URL}/api/orders`, orderData);
+        
+        if (DEBUG_MODE) {
+          console.log(`[PaypalService] Réponse de création de commande locale:`, JSON.stringify(orderResponse.data));
+        }
+        
+        // Extraire l'ID de la commande locale depuis la structure de réponse correcte
+        // La réponse contient un tableau 'orders', nous prenons l'ID de la première commande
+        if (orderResponse.data && orderResponse.data.orders && orderResponse.data.orders.length > 0) {
+          localOrderId = orderResponse.data.orders[0].id;
+        } else if (orderResponse.data && orderResponse.data.id) {
+          // Fallback au cas où la structure serait différente
+          localOrderId = orderResponse.data.id;
+        }
+        
+        if (DEBUG_MODE) {
+          console.log(`[PaypalService] Commande locale créée avec l'ID: ${localOrderId}`);
+        }
+      } catch (orderError) {
+        if (DEBUG_MODE && axios.isAxiosError(orderError)) {
+          console.error(`[PaypalService] Erreur lors de la création de la commande locale: ${orderError.message}`);
+          console.error(`[PaypalService] Status: ${orderError.response?.status}`);
+          console.error(`[PaypalService] URL: ${orderError.config?.url}`);
+          console.error(`[PaypalService] Méthode: ${orderError.config?.method}`);
+          console.error(`[PaypalService] Données: ${JSON.stringify(orderError.config?.data)}`);
+          console.error(`[PaypalService] Réponse: ${JSON.stringify(orderError.response?.data)}`);
+        }
+        throw new Error("Impossible de créer la commande locale. Veuillez réessayer.");
+      }
       
-      const localOrderId = orderResponse.data.id;
+      // Vérifier que localOrderId existe avant de continuer
+      if (!localOrderId) {
+        console.error(`[PaypalService] ID de commande locale non disponible après la requête`);
+        throw new Error("ID de commande locale non disponible. Veuillez réessayer.");
+      }
       
       if (DEBUG_MODE) {
-        console.log(`[PaypalService] Commande locale créée avec l'ID: ${localOrderId}`);
         console.log(`[PaypalService] Appel de l'API PayPal: ${API_URL}/api/paypal/create-order`);
       }
       
@@ -99,7 +142,7 @@ class PaypalService {
       return {
         id: paypalOrderId,
         status: response.data.status,
-        approvalUrl: approvalUrl
+        approvalUrl
       };
     } catch (error) {
       console.error('Erreur lors de la création de la commande PayPal:', error);

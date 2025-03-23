@@ -65,3 +65,4 @@ stores/
 - Protection des routes
 - Validation des formulaires
 - Gestion sécurisée des tokens
+

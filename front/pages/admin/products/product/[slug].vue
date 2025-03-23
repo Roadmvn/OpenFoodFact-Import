@@ -142,10 +142,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import JsBarcode from 'jsbarcode';
 
 const { $axios } = useNuxtApp();
 const route = useRoute();
@@ -154,7 +153,6 @@ const route = useRoute();
 const produitFormulaire = ref({
   id: null,
   code: "",
-  barcode: "",
   name: "",
   brand: "",
   categories: "",
@@ -167,6 +165,7 @@ const produitFormulaire = ref({
   sugars: null,
   salt: null,
   proteins: null,
+  barcode: "",
 });
 const chargement = ref(true); // État de chargement
 const enCoursDeMiseAJour = ref(false); // État de la mise à jour
@@ -184,13 +183,6 @@ const chargerProduit = async () => {
     const response = await $axios.get(`/api/products/product/${route.params.slug}`);
 
     produitFormulaire.value = response.data; // Charger les données dans le formulaire
-    
-    // Si le barcode n'est pas défini mais que le code existe, utiliser le code comme barcode par défaut
-    if (!produitFormulaire.value.barcode && produitFormulaire.value.code) {
-      produitFormulaire.value.barcode = produitFormulaire.value.code;
-    }
-    
-    return response;
   } catch (error) {
     ElMessage.error("Impossible de charger les informations du produit !");
     console.error("Erreur de chargement du produit:", error);
@@ -219,46 +211,19 @@ const mettreAJourProduit = async () => {
       ElMessage.error("Erreur lors de la mise à jour !");
     }
   } catch (error) {
-    ElMessage.error("Erreur lors de la mise à jour du produit !");
+    ElMessage.error("Impossible de mettre à jour le produit !");
     console.error("Erreur de mise à jour:", error);
   } finally {
     enCoursDeMiseAJour.value = false;
   }
 };
 
-// Fonction pour générer le code-barres
-const genererCodeBarres = () => {
-  if (produitFormulaire.value.barcode) {
-    try {
-      setTimeout(() => {
-        const barcodeElement = document.getElementById('barcode');
-        if (barcodeElement) {
-          JsBarcode("#barcode", produitFormulaire.value.barcode, {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 2,
-            height: 50,
-            displayValue: true,
-            fontSize: 12,
-            margin: 10
-          });
-        }
-      }, 100);
-    } catch (error) {
-      console.error("Erreur lors de la génération du code-barres:", error);
-    }
-  }
-};
-
-// Surveiller les changements du code-barres pour régénérer le SVG
-watch(() => produitFormulaire.value.barcode, () => {
-  genererCodeBarres();
-});
-
 // Charger les données au montage
 onMounted(() => {
-  chargerProduit().then(() => {
-    genererCodeBarres();
-  });
+  chargerProduit();
 });
 </script>
+
+<style scoped>
+/* Ajoutez ici des styles personnalisés si nécessaire */
+</style>

@@ -90,7 +90,7 @@ const PaymentScreen = () => {
   logInfo("Paramètres reçus", { 
     cartItemsCount: cartItems.length, 
     totalAmount: totalAmount,
-    userId: user?.id
+    userId: user?.id  // Utiliser l'ID réel de l'utilisateur connecté
   });
   
   const [loading, setLoading] = useState(true);
@@ -99,6 +99,7 @@ const PaymentScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [statusCheckIntervalId, setStatusCheckIntervalId] = useState<number | null>(null);
   
   // Animations
   const headerAnimation = useRef(new Animated.Value(10)).current;
@@ -231,6 +232,194 @@ const PaymentScreen = () => {
     createPaypalOrder();
   }, [cartItems, user, retryCount]);
   
+  // Fonction pour vérifier le statut du paiement
+  const checkPaymentStatus = async (paypalOrderId: string) => {
+    if (!paypalOrderId) {
+      logError("Impossible de vérifier le statut: ID de commande PayPal manquant");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      logInfo("Vérification du statut du paiement", { paypalOrderId });
+      
+      const statusResponse = await PaypalService.checkOrderStatus(paypalOrderId);
+      
+      logInfo("Statut du paiement reçu", { status: statusResponse.status });
+      
+      // Vérifier si le paiement est approuvé ou complété
+      if (statusResponse.status === 'COMPLETED' || statusResponse.status === 'APPROVED') {
+        logInfo("Paiement approuvé, capture de la commande");
+        
+        // Capturer la commande
+        const captureResponse = await PaypalService.captureOrder(paypalOrderId);
+        
+        logInfo("Commande capturée avec succès", { captureResponse });
+        
+        // Vider le panier
+        await CartService.clearCart();
+        
+        // Rediriger vers l'écran de succès
+        navigation.navigate('PaymentSuccess', {
+          orderId: captureResponse.localOrderId || 'unknown',
+          paypalOrderId: captureResponse.id,
+          totalAmount: totalAmount
+        });
+        return true; // Indique que le paiement est complété
+      } else if (statusResponse.status === 'PENDING') {
+        logWarning("Paiement en attente", { status: statusResponse.status });
+        Alert.alert(
+          "Paiement en attente",
+          "Votre paiement est en cours de traitement par PayPal. Vous recevrez une notification lorsqu'il sera finalisé.",
+          [{ text: "OK" }]
+        );
+        return false; // Continuer à vérifier
+      } else if (statusResponse.status === 'FAILED') {
+        logError("Paiement échoué", { status: statusResponse.status });
+        Alert.alert(
+          "Paiement échoué",
+          "Votre paiement n'a pas pu être traité. Veuillez réessayer plus tard.",
+          [{ text: "OK" }]
+        );
+        setPaymentInitiated(false);
+        return true; // Arrêter de vérifier
+      } else {
+        logWarning("Statut de paiement inconnu", { status: statusResponse.status });
+        Alert.alert(
+          "Statut de paiement inconnu",
+          `Le statut actuel de votre paiement est: ${statusResponse.status}. Nous continuerons à vérifier son évolution.`,
+          [{ text: "OK" }]
+        );
+        return false; // Continuer à vérifier
+      }
+    } catch (err: any) {
+      logError("Erreur lors de la vérification du statut du paiement", err);
+      Alert.alert(
+        "Erreur de vérification",
+        "Impossible de vérifier le statut de votre paiement. Nous réessaierons dans quelques instants.",
+        [{ text: "OK" }]
+      );
+      return false; // Continuer à vérifier malgré l'erreur
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour démarrer la vérification périodique du statut
+  const startStatusChecking = (paypalOrderId: string) => {
+    logInfo("Démarrage de la vérification périodique du statut", { paypalOrderId });
+    
+    // Durée maximale de vérification: 2 minutes
+    const maxCheckTime = 2 * 60 * 1000; // 2 minutes en millisecondes
+    const checkInterval = 5000; // 5 secondes
+    
+    let elapsedTime = 0;
+    
+    // Afficher un message pour informer l'utilisateur
+    Alert.alert(
+      "Redirection vers PayPal",
+      "Vous allez être redirigé vers PayPal pour finaliser votre paiement. Après avoir complété le paiement, revenez à l'application pour confirmer votre commande.",
+      [{ text: "OK" }]
+    );
+    
+    // Fonction pour effectuer une vérification unique
+    const performCheck = async () => {
+      const isCompleted = await checkPaymentStatus(paypalOrderId);
+      
+      if (isCompleted) {
+        // Si le paiement est complété ou a échoué définitivement, arrêter les vérifications
+        logInfo("Vérification du statut terminée: paiement complété ou échec définitif");
+        clearInterval(intervalId);
+        return;
+      }
+      
+      elapsedTime += checkInterval;
+      
+      if (elapsedTime >= maxCheckTime) {
+        // Si le temps maximum est atteint, arrêter les vérifications
+        logWarning("Temps maximum de vérification atteint");
+        clearInterval(intervalId);
+        
+        Alert.alert(
+          "Vérification terminée",
+          "Nous avons arrêté la vérification automatique du statut de votre paiement. Vous pouvez vérifier manuellement en appuyant sur 'Vérifier le statut'.",
+          [
+            { 
+              text: "Vérifier le statut", 
+              onPress: () => checkPaymentStatus(paypalOrderId) 
+            },
+            { 
+              text: "OK" 
+            }
+          ]
+        );
+      }
+    };
+    
+    // Démarrer les vérifications périodiques
+    const intervalId = setInterval(performCheck, checkInterval);
+    
+    // Effectuer une première vérification immédiate
+    performCheck();
+    
+    // Stocker l'ID de l'intervalle pour pouvoir l'arrêter plus tard
+    setStatusCheckIntervalId(intervalId);
+    
+    return () => {
+      // Fonction de nettoyage pour arrêter les vérifications
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  };
+
+  // Fonction pour créer et ouvrir une commande PayPal
+  const createPaypalOrder = async () => {
+    try {
+      setLoading(true);
+      setPaymentInitiated(true);
+      
+      logInfo("Création d'une commande PayPal", { cartItems, userId: user.id });
+      
+      const orderData = await PaypalService.createOrder(cartItems, user.id);
+      
+      logInfo("Commande PayPal créée", { orderData });
+      
+      // Stocker les données de la commande PayPal
+      setPaypalOrderData(orderData);
+      
+      // Ouvrir l'URL d'approbation PayPal
+      await Linking.openURL(orderData.approvalUrl);
+      
+      // Démarrer la vérification périodique du statut
+      startStatusChecking(orderData.id);
+      
+    } catch (error: any) {
+      logError("Erreur lors de la création de la commande PayPal", error);
+      
+      Alert.alert(
+        "Erreur de paiement",
+        "Impossible de créer la commande PayPal. Veuillez réessayer plus tard.",
+        [{ text: "OK" }]
+      );
+      
+      setPaymentInitiated(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Effet pour gérer le nettoyage lors du démontage du composant
+  useEffect(() => {
+    // Fonction de nettoyage
+    return () => {
+      // Arrêter la vérification périodique si elle est en cours
+      if (statusCheckIntervalId) {
+        clearInterval(statusCheckIntervalId);
+      }
+    };
+  }, [statusCheckIntervalId]);
+  
   // Gérer l'ouverture du lien PayPal dans le navigateur externe
   const handleOpenPayPalLink = async () => {
     if (!paypalUrl) {
@@ -247,12 +436,15 @@ const PaymentScreen = () => {
       if (supported) {
         await Linking.openURL(paypalUrl);
         
-        // Afficher des instructions à l'utilisateur
+        // Afficher des instructions plus claires à l'utilisateur
         Alert.alert(
-          "Paiement PayPal",
-          "Vous allez être redirigé vers PayPal pour finaliser votre paiement. Une fois le paiement terminé, revenez à l'application et appuyez sur 'Vérifier le paiement'.",
-          [{ text: "OK" }]
+          "Paiement PayPal en cours",
+          "Vous avez été redirigé vers PayPal pour finaliser votre paiement. Une fois le paiement terminé, revenez à l'application. Nous vérifierons automatiquement l'état de votre paiement.",
+          [{ text: "Compris" }]
         );
+        
+        // Démarrer la vérification périodique du statut
+        startStatusChecking(paypalOrderData!.id);
       } else {
         logError(`Impossible d'ouvrir l'URL: ${paypalUrl}`);
         setError("Impossible d'ouvrir le lien PayPal");
@@ -260,61 +452,6 @@ const PaymentScreen = () => {
     } catch (err) {
       logError("Erreur lors de l'ouverture du lien PayPal", err);
       setError("Une erreur est survenue lors de l'ouverture du lien PayPal");
-    }
-  };
-  
-  // Vérifier le statut du paiement
-  const checkPaymentStatus = async () => {
-    if (!paypalOrderData || !paypalOrderData.id) {
-      logError("Tentative de vérification du paiement sans ID de commande valide");
-      return;
-    }
-    
-    logInfo("Vérification du statut du paiement", { paypalOrderId: paypalOrderData.id });
-    
-    try {
-      setLoading(true);
-      
-      // Vérifier le statut de la commande
-      const statusResponse = await PaypalService.checkOrderStatus(paypalOrderData.id);
-      
-      logInfo("Statut de la commande récupéré", { status: statusResponse.status });
-      
-      // Vérifier si le paiement est approuvé ou complété
-      if (statusResponse.status === 'COMPLETED' || statusResponse.status === 'APPROVED') {
-        logInfo("Paiement approuvé, capture de la commande");
-        
-        // Capturer la commande
-        const captureResponse = await PaypalService.captureOrder(paypalOrderData.id);
-        
-        logInfo("Commande capturée avec succès", { captureResponse });
-        
-        // Vider le panier
-        await CartService.clearCart();
-        
-        // Rediriger vers l'écran de succès
-        navigation.navigate('PaymentSuccess', {
-          orderId: captureResponse.localOrderId || 'unknown',
-          paypalOrderId: captureResponse.id,
-          totalAmount: totalAmount
-        });
-      } else {
-        logWarning("Paiement non complété", { status: statusResponse.status });
-        Alert.alert(
-          "Paiement en attente",
-          "Votre paiement n'a pas encore été finalisé. Veuillez compléter le processus de paiement sur PayPal avant de vérifier à nouveau.",
-          [{ text: "OK" }]
-        );
-      }
-    } catch (err: any) {
-      logError("Erreur lors de la vérification du statut du paiement", err);
-      Alert.alert(
-        "Erreur de vérification",
-        "Impossible de vérifier le statut de votre paiement. Veuillez réessayer plus tard.",
-        [{ text: "OK" }]
-      );
-    } finally {
-      setLoading(false);
     }
   };
   
@@ -491,13 +628,13 @@ const PaymentScreen = () => {
                 disabled={!paypalUrl}
                 activeOpacity={0.7}
               >
-                <Ionicons name="ios-card" size={24} color="#fff" style={styles.buttonIcon} />
+                <Ionicons name="card" size={24} color="#fff" style={styles.buttonIcon} />
                 <Text style={[styles.payButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>Payer</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={[styles.verifyButton, { backgroundColor: theme.accent }]}
-                onPress={checkPaymentStatus}
+                onPress={() => checkPaymentStatus(paypalOrderData!.id)}
                 activeOpacity={0.7}
               >
                 <Ionicons name="checkmark-circle" size={24} color="#fff" style={styles.buttonIcon} />

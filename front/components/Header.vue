@@ -45,7 +45,7 @@
           :ellipsis="false"
       >
         <el-menu-item index="1"><a href="/about">Qui somme nous</a></el-menu-item>
-        <el-menu-item index="1"><a href="/nos-products">Nous Produits</a></el-menu-item>
+        <el-menu-item index="1"><a href="/nos-products">Nos Produits</a></el-menu-item>
         <el-menu-item index="1"><a href="/new-products">Nouveaux produits</a></el-menu-item>
         <el-menu-item index="1"><a href="/products/search">Recherche précise</a></el-menu-item>
         <el-menu-item index="1" v-if="!user"><a href="/login">Se connecter</a></el-menu-item>

@@ -1,6 +1,43 @@
 'use strict';
 const { Model } = require('sequelize');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     InternalProduct:
+ *       type: object
+ *       required:
+ *         - sellerId
+ *         - productId
+ *         - price
+ *         - quantity
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique du produit interne
+ *         sellerId:
+ *           type: integer
+ *           description: Identifiant du vendeur
+ *         productId:
+ *           type: integer
+ *           description: Identifiant du produit OpenFoodFact
+ *         price:
+ *           type: number
+ *           format: decimal
+ *           description: Prix du produit
+ *         quantity:
+ *           type: integer
+ *           description: Quantité disponible
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date de création
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date de dernière mise à jour
+ */
 module.exports = (sequelize, DataTypes) => {
     class InternalProduct extends Model {
         static associate(models) {

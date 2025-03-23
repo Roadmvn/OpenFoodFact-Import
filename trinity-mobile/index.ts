@@ -1,5 +1,10 @@
-import { AppRegistry } from 'react-native';
+import { LogBox } from 'react-native';
+import { registerRootComponent } from 'expo';
 import App from './App';
 
-// Remplacer registerRootComponent par AppRegistry.registerComponent
-AppRegistry.registerComponent('main', () => App);
+// Utiliser registerRootComponent au lieu de AppRegistry.registerComponent
+// Enregistrer le composant principal de l'application
+registerRootComponent(App);
+
+// Désactiver les avertissements en mode développement
+LogBox.ignoreAllLogs(true);
