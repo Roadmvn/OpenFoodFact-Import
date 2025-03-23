@@ -148,7 +148,7 @@ exports.getAllInternalProducts = async (req, res) => {
                 {
                     model: Product, // 关联 Product 模型
                     as: 'product',  // 别名，与 `InternalProduct` 的关联关系
-                    attributes: ['id', 'name', 'brand', 'categories', 'labels', 'image_url', 'code',], // 只筛选必要的字段
+                    attributes: ['id', 'name', 'brand', 'categories', 'labels', 'image_url', 'code'], // 只筛选必要的字段
                 },
                 {
                     model: User, // 关联 User 模型
