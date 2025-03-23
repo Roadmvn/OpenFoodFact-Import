@@ -43,8 +43,8 @@ const logWarning = (message: string, data?: any) => {
   }
 };
 
-// Commenté temporairement pour éviter l'erreur
-// import { WebView } from 'react-native-webview';
+// Décommenter cette ligne pour utiliser WebView
+import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -191,47 +191,84 @@ const PaymentScreen = () => {
     };
   }, [navigation]);
   
-  // Créer la commande PayPal
-  useEffect(() => {
-    logInfo("Démarrage du processus de création de commande PayPal");
-    
-    const createPaypalOrder = async () => {
-      try {
-        setLoading(true);
-        
-        if (!user || !user.id) {
-          logError("Tentative de paiement sans utilisateur connecté");
-          throw new Error('Utilisateur non connecté');
-        }
-        
-        logInfo("Appel du service PayPal pour créer une commande", {
-          userId: user.id,
-          cartItemsCount: cartItems.length,
-          totalAmount: totalAmount
-        });
-        
-        // Créer la commande PayPal
-        const orderData = await PaypalService.createOrder(cartItems, user.id);
-        
-        logInfo("Commande PayPal créée avec succès", {
-          paypalOrderId: orderData.id,
-          approvalUrl: orderData.approvalUrl
-        });
-        
-        setPaypalOrderData(orderData);
-        setPaypalUrl(orderData.approvalUrl);
-        setError(null);
-      } catch (err: any) {
-        logError("Erreur lors de la création de la commande PayPal", err);
-        setError(err.message || 'Impossible de créer la commande PayPal');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    createPaypalOrder();
-  }, [cartItems, user, retryCount]);
+  // Ajouter un état pour stocker le HTML contenant les boutons PayPal
+  const [paypalHtml, setPaypalHtml] = useState<string | null>(null);
   
+  // Modifier la création de commande pour générer le HTML avec le bon client ID PayPal
+  const createPaypalOrder = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      logInfo("Création d'une commande PayPal", { cartItems, userId: user.id });
+      
+      // On utilise le même client ID que dans le frontend
+      const CLIENT_ID = "AX2YAQ3gXr-WidNvgMevZM5ysidZRocYDSF2sxkp5FXjhv8gcQtLpJ7A9YR7PG58N0NRJcEUXgVLrTSb";
+      
+      const orderData = await PaypalService.createOrder(cartItems, user.id);
+      
+      logInfo("Commande PayPal créée", { orderData });
+      
+      // Stocker les données de la commande PayPal
+      setPaypalOrderData(orderData);
+      
+      // HTML pour les boutons PayPal - utiliser la même structure que dans le frontend
+      const paypalButtonHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <script src="https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&currency=EUR"></script>
+        </head>
+        <body style="display:flex;justify-content:center;align-items:center;height:100%;margin:0;background:#f5f5f5;">
+          <div id="paypal-button-container" style="width:100%;max-width:300px;"></div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              // Vérifier si le SDK PayPal est chargé
+              if (typeof paypal === 'undefined') {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'error',
+                  error: 'Impossible de charger le SDK PayPal'
+                }));
+              } else {
+                // Utiliser la même structure que dans le front
+                paypal
+                  .Buttons({
+                    // Utiliser l'ID de commande PayPal retourné par votre backend
+                    createOrder: function() {
+                      return "${orderData.id}";
+                    },
+                    onApprove: async function(data) {
+                      window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'success',
+                        orderId: data.orderID
+                      }));
+                    },
+                    onError: function(err) {
+                      window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'error',
+                        error: err.message || 'Erreur lors du paiement PayPal'
+                      }));
+                    }
+                  })
+                  .render('#paypal-button-container');
+              }
+            });
+          </script>
+        </body>
+        </html>
+      `;
+      
+      setPaypalHtml(paypalButtonHtml);
+      setLoading(false);
+      
+    } catch (error) {
+      logError("Erreur lors de la création de la commande PayPal", error);
+      setError(error.message || "Impossible de créer la commande PayPal");
+      setLoading(false);
+    }
+  };
+
   // Fonction pour vérifier le statut du paiement
   const checkPaymentStatus = async (paypalOrderId: string) => {
     if (!paypalOrderId) {
@@ -373,93 +410,26 @@ const PaymentScreen = () => {
     };
   };
 
-  // Fonction pour créer et ouvrir une commande PayPal
-  const createPaypalOrder = async () => {
+  // Correction de la gestion des messages WebView
+  const handleWebViewMessage = (event) => {
     try {
-      setLoading(true);
-      setPaymentInitiated(true);
+      const data = JSON.parse(event.nativeEvent.data);
+      logInfo("Message reçu de WebView PayPal", data);
       
-      logInfo("Création d'une commande PayPal", { cartItems, userId: user.id });
-      
-      const orderData = await PaypalService.createOrder(cartItems, user.id);
-      
-      logInfo("Commande PayPal créée", { orderData });
-      
-      // Stocker les données de la commande PayPal
-      setPaypalOrderData(orderData);
-      
-      // Ouvrir l'URL d'approbation PayPal
-      await Linking.openURL(orderData.approvalUrl);
-      
-      // Démarrer la vérification périodique du statut
-      startStatusChecking(orderData.id);
-      
-    } catch (error: any) {
-      logError("Erreur lors de la création de la commande PayPal", error);
-      
-      Alert.alert(
-        "Erreur de paiement",
-        "Impossible de créer la commande PayPal. Veuillez réessayer plus tard.",
-        [{ text: "OK" }]
-      );
-      
-      setPaymentInitiated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Effet pour gérer le nettoyage lors du démontage du composant
-  useEffect(() => {
-    // Fonction de nettoyage
-    return () => {
-      // Arrêter la vérification périodique si elle est en cours
-      if (statusCheckIntervalId) {
-        clearInterval(statusCheckIntervalId);
-      }
-    };
-  }, [statusCheckIntervalId]);
-  
-  // Gérer l'ouverture du lien PayPal dans le navigateur externe
-  const handleOpenPayPalLink = async () => {
-    if (!paypalUrl) {
-      logError("Tentative d'ouverture du lien PayPal sans URL valide");
-      return;
-    }
-    
-    logInfo("Ouverture du lien PayPal dans le navigateur externe", { url: paypalUrl });
-    
-    try {
-      setPaymentInitiated(true);
-      const supported = await Linking.canOpenURL(paypalUrl);
-      
-      if (supported) {
-        await Linking.openURL(paypalUrl);
-        
-        // Afficher des instructions plus claires à l'utilisateur
-        Alert.alert(
-          "Paiement PayPal en cours",
-          "Vous avez été redirigé vers PayPal pour finaliser votre paiement. Une fois le paiement terminé, revenez à l'application. Nous vérifierons automatiquement l'état de votre paiement.",
-          [{ text: "Compris" }]
-        );
-        
-        // Démarrer la vérification périodique du statut
-        startStatusChecking(paypalOrderData!.id);
-      } else {
-        logError(`Impossible d'ouvrir l'URL: ${paypalUrl}`);
-        setError("Impossible d'ouvrir le lien PayPal");
+      if (data.type === 'success') {
+        // Naviguer vers l'écran de succès comme dans le frontend
+        navigation.navigate('PaymentSuccess', {
+          orderId: paypalOrderData!.id,
+          paypalOrderId: data.orderId,
+          totalAmount: totalAmount
+        });
+      } else if (data.type === 'error') {
+        setError(data.error || "Erreur lors du paiement PayPal");
       }
     } catch (err) {
-      logError("Erreur lors de l'ouverture du lien PayPal", err);
-      setError("Une erreur est survenue lors de l'ouverture du lien PayPal");
+      logError("Erreur lors du traitement du message WebView", err);
+      setError("Erreur lors du traitement de la réponse PayPal");
     }
-  };
-  
-  // Fonction pour réessayer la création de commande
-  const handleRetry = () => {
-    logInfo("Tentative de recréation de la commande PayPal");
-    setRetryCount(prev => prev + 1);
-    setError(null);
   };
   
   // Rendu de l'interface
@@ -596,17 +566,64 @@ const PaymentScreen = () => {
         </View>
         
         {/* Affichage des erreurs */}
-        {error && (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.accent} />
+            <Text style={[styles.loadingText, { color: theme.text }]}>
+              Préparation de votre paiement...
+            </Text>
+          </View>
+        ) : error ? (
           <View style={[styles.errorContainer, { backgroundColor: theme.error }]}>
             <Ionicons name="alert-circle" size={24} color="#fff" />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
-              onPress={handleRetry}
+              onPress={() => {
+                logInfo("Tentative de recréation de la commande PayPal");
+                setRetryCount(prev => prev + 1);
+                setError(null);
+              }}
             >
               <Text style={styles.retryButtonText}>Réessayer</Text>
             </TouchableOpacity>
           </View>
+        ) : paypalHtml ? (
+          <View style={styles.webViewContainer}>
+            <WebView
+              source={{ html: paypalHtml }}
+              onMessage={handleWebViewMessage}
+              style={styles.webView}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <View style={styles.webViewLoading}>
+                  <ActivityIndicator size="small" color={theme.accent} />
+                </View>
+              )}
+            />
+          </View>
+        ) : paymentInitiated ? (
+          <TouchableOpacity
+            style={[styles.verifyButton, { backgroundColor: theme.accent }]}
+            onPress={() => checkPaymentStatus(paypalOrderData!.id)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="checkmark-circle" size={24} color="#fff" style={styles.buttonIcon} />
+            <Text style={[styles.verifyButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>
+              Vérifier le paiement
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.payButton, { backgroundColor: theme.accent }]}
+            onPress={createPaypalOrder}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="logo-paypal" size={24} color="#fff" style={styles.buttonIcon} />
+            <Text style={[styles.payButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>
+              Payer avec PayPal
+            </Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
       
@@ -619,54 +636,82 @@ const PaymentScreen = () => {
               Préparation de votre paiement...
             </Text>
           </View>
-        ) : (
-          <>
-            {!paymentInitiated ? (
-              <TouchableOpacity
-                style={[styles.payButton, { backgroundColor: theme.accent }]}
-                onPress={handleOpenPayPalLink}
-                disabled={!paypalUrl}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="card" size={24} color="#fff" style={styles.buttonIcon} />
-                <Text style={[styles.payButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>Payer</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.verifyButton, { backgroundColor: theme.accent }]}
-                onPress={() => checkPaymentStatus(paypalOrderData!.id)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="checkmark-circle" size={24} color="#fff" style={styles.buttonIcon} />
-                <Text style={[styles.verifyButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>Vérifier le paiement</Text>
-              </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: theme.error }]}
+        ) : error ? (
+          <View style={[styles.errorContainer, { backgroundColor: theme.error }]}>
+            <Ionicons name="alert-circle" size={24} color="#fff" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
               onPress={() => {
-                logInfo("Bouton annuler pressé");
-                Alert.alert(
-                  'Annuler le paiement',
-                  'Êtes-vous sûr de vouloir annuler le processus de paiement ?',
-                  [
-                    { text: 'Non', style: 'cancel' },
-                    { 
-                      text: 'Oui', 
-                      style: 'destructive', 
-                      onPress: () => navigation.goBack() 
-                    },
-                  ]
-                );
+                logInfo("Tentative de recréation de la commande PayPal");
+                setRetryCount(prev => prev + 1);
+                setError(null);
               }}
-              activeOpacity={0.7}
             >
-              <Text style={[styles.cancelButtonText, { color: theme.error, fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif-medium' }]}>
-                Annuler
-              </Text>
+              <Text style={styles.retryButtonText}>Réessayer</Text>
             </TouchableOpacity>
-          </>
+          </View>
+        ) : paypalHtml ? (
+          <View style={styles.webViewContainer}>
+            <WebView
+              source={{ html: paypalHtml }}
+              onMessage={handleWebViewMessage}
+              style={styles.webView}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <View style={styles.webViewLoading}>
+                  <ActivityIndicator size="small" color={theme.accent} />
+                </View>
+              )}
+            />
+          </View>
+        ) : paymentInitiated ? (
+          <TouchableOpacity
+            style={[styles.verifyButton, { backgroundColor: theme.accent }]}
+            onPress={() => checkPaymentStatus(paypalOrderData!.id)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="checkmark-circle" size={24} color="#fff" style={styles.buttonIcon} />
+            <Text style={[styles.verifyButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>
+              Vérifier le paiement
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.payButton, { backgroundColor: theme.accent }]}
+            onPress={createPaypalOrder}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="logo-paypal" size={24} color="#fff" style={styles.buttonIcon} />
+            <Text style={[styles.payButtonText, { fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium' }]}>
+              Payer avec PayPal
+            </Text>
+          </TouchableOpacity>
         )}
+        
+        <TouchableOpacity
+          style={[styles.cancelButton, { borderColor: theme.error }]}
+          onPress={() => {
+            logInfo("Bouton annuler pressé");
+            Alert.alert(
+              'Annuler le paiement',
+              'Êtes-vous sûr de vouloir annuler le processus de paiement ?',
+              [
+                { text: 'Non', style: 'cancel' },
+                { 
+                  text: 'Oui', 
+                  style: 'destructive', 
+                  onPress: () => navigation.goBack() 
+                },
+              ]
+            );
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.cancelButtonText, { color: theme.error, fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif-medium' }]}>
+            Annuler
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -903,6 +948,20 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  webViewContainer: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 8,
+  },
+  webView: {
+    flex: 1,
+  },
+  webViewLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

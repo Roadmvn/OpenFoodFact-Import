@@ -38,83 +38,62 @@ class GoogleAuthService {
       const backendHost = apiUrlParts ? apiUrlParts[1] : 'localhost';
       const backendPort = apiUrlParts ? apiUrlParts[2] : '3001';
       
-      // Construire l'URL de redirection qui correspond à celle configurée dans le backend
-      // mais en utilisant l'adresse IP actuelle
-      const REDIRECT_URL = `http://${backendHost}:8001/auth/google/callback`;
+      // Modifier pour utiliser une URL de redirection fiable
+      const REDIRECT_URL = `${APP_SCHEME}:/oauth2redirect`;
       
-      // URL d'authentification Google sur le backend
+      // Utiliser un schéma d'application au lieu d'une URL HTTP
       const authUrl = `${API_URL}/auth/google?redirect_uri=${encodeURIComponent(REDIRECT_URL)}`;
       
       console.log('Ouverture du navigateur pour authentification Google:', authUrl);
       console.log('URL de redirection configurée:', REDIRECT_URL);
       
-      // Variable pour stocker le token extrait de l'URL
-      let extractedToken: string | null = null;
+      // Ajouter un timeout pour éviter un blocage indéfini
+      const authPromise = WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URL);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Délai d'authentification dépassé")), 30000)
+      );
       
-      // Configurer un gestionnaire pour intercepter la redirection
-      const subscription = Linking.addEventListener('url', (event) => {
-        console.log('URL interceptée:', event.url);
+      try {
+        const result = await Promise.race([authPromise, timeoutPromise]);
         
-        // Extraire le token de l'URL
-        try {
-          const params = new URLSearchParams(event.url.split('?')[1]);
-          const token = params.get('token');
+        // Vérifier si l'authentification a été annulée
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          console.log('Authentification Google annulée par l\'utilisateur');
+          return null;
+        }
+        
+        // Vérifier si l'authentification a réussi
+        if (result.type === 'success') {
+          const { url } = result;
+          console.log('URL de redirection après authentification:', url);
           
-          if (token) {
-            console.log('Token extrait de l\'URL interceptée');
-            extractedToken = token;
+          // Extraire le token de l'URL de résultat ou utiliser celui intercepté par le gestionnaire
+          let token: string | null = null;
+          
+          try {
+            const params = new URLSearchParams(url.split('?')[1]);
+            token = params.get('token');
+          } catch (error) {
+            console.error('Erreur lors de l\'extraction du token de l\'URL de résultat:', error);
           }
-        } catch (error) {
-          console.error('Erreur lors de l\'extraction du token:', error);
+          
+          if (!token) {
+            throw new Error('Token non trouvé dans l\'URL de redirection');
+          }
+          
+          // Stocker le token
+          await SecureStore.setItemAsync('userToken', token);
+          
+          // Récupérer les informations de l'utilisateur
+          const userData = await this.getUserInfo(token);
+          return userData;
         }
-      });
-      
-      // Ouvrir le navigateur pour l'authentification
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URL);
-      
-      // Supprimer le gestionnaire d'événements
-      subscription.remove();
-      
-      // Vérifier si l'authentification a été annulée
-      if (result.type === 'cancel' || result.type === 'dismiss') {
-        console.log('Authentification Google annulée par l\'utilisateur');
-        return null;
+        
+        throw new Error('Échec de l\'authentification Google');
+      } catch (error) {
+        console.error('Erreur lors de l\'authentification Google:', error);
+        throw error;
       }
-      
-      // Vérifier si l'authentification a réussi
-      if (result.type === 'success') {
-        const { url } = result;
-        console.log('URL de redirection après authentification:', url);
-        
-        // Extraire le token de l'URL de résultat ou utiliser celui intercepté par le gestionnaire
-        let token: string | null = null;
-        
-        try {
-          const params = new URLSearchParams(url.split('?')[1]);
-          token = params.get('token');
-        } catch (error) {
-          console.error('Erreur lors de l\'extraction du token de l\'URL de résultat:', error);
-        }
-        
-        // Utiliser le token extrait par le gestionnaire si celui de l'URL de résultat n'est pas disponible
-        if (!token && extractedToken) {
-          console.log('Utilisation du token intercepté par le gestionnaire');
-          token = extractedToken;
-        }
-        
-        if (!token) {
-          throw new Error('Token non trouvé dans l\'URL de redirection');
-        }
-        
-        // Stocker le token
-        await SecureStore.setItemAsync('userToken', token);
-        
-        // Récupérer les informations de l'utilisateur
-        const userData = await this.getUserInfo(token);
-        return userData;
-      }
-      
-      throw new Error('Échec de l\'authentification Google');
     } catch (error) {
       console.error('Erreur lors de l\'authentification Google:', error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion avec Google. Veuillez réessayer.');
