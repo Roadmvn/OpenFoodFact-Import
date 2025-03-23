@@ -25,7 +25,7 @@ const handleLogin = async () => {
 
 const loginWithGoogle = () => {
   // 跳转到后端 Google OAuth 登录路由
-  window.location.href = 'http://localhost:8001/auth/google';
+  window.location.href = 'http://localhost:3001/auth/google';
 }
 
 </script>

@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 const API_PORT = process.env.API_PORT || Constants.expoConfig?.extra?.API_PORT || 3001;
 
 // Adresse IP de votre PC lorsqu'il est connecté au partage de connexion
-const HOTSPOT_IP = '192.168.1.96'; // Adresse IP actuelle de votre PC sur le partage de connexion
+const HOTSPOT_IP = '192.168.0.35'; // Adresse IP actuelle de votre PC sur le partage de connexion
 
 // L'URL de base pour l'API
 const getBaseUrl = () => {
