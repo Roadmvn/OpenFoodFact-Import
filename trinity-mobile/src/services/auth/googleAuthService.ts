@@ -38,17 +38,13 @@ class GoogleAuthService {
       const backendHost = apiUrlParts ? apiUrlParts[1] : 'localhost';
       const backendPort = apiUrlParts ? apiUrlParts[2] : '3001';
       
-      // Modifier pour utiliser une URL de redirection fiable
-      const REDIRECT_URL = `${APP_SCHEME}:/oauth2redirect`;
-      
       // Utiliser un schéma d'application au lieu d'une URL HTTP
-      const authUrl = `${API_URL}/auth/google?redirect_uri=${encodeURIComponent(REDIRECT_URL)}`;
+      const authUrl = `${API_URL}/auth/google`;
       
       console.log('Ouverture du navigateur pour authentification Google:', authUrl);
-      console.log('URL de redirection configurée:', REDIRECT_URL);
       
       // Ajouter un timeout pour éviter un blocage indéfini
-      const authPromise = WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URL);
+      const authPromise = WebBrowser.openAuthSessionAsync(authUrl);
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Délai d'authentification dépassé")), 30000)
       );
