@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button, Text, Appbar, FAB, Avatar, IconButton } from 'react-native-paper';
 import { logout } from '../../store/slices/authSlice';
 import { RootState } from '../../store/index';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
@@ -27,6 +27,17 @@ const DashboardScreen = () => {
     // Charger les compteurs au démarrage
     loadCounters();
   }, [colorBlindMode, theme]);
+  
+  // Recharger les compteurs quand l'écran est de nouveau affiché
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('DashboardScreen - Écran affiché, actualisation des compteurs');
+      loadCounters();
+      return () => {
+        // Nettoyage si nécessaire quand l'écran perd le focus
+      };
+    }, [])
+  );
 
   // Fonction pour charger les compteurs
   const loadCounters = async () => {

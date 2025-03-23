@@ -8,11 +8,12 @@ import { updateProfileRequest } from '../../store/slices/authSlice';
 import { useTheme } from '../../context/ThemeContext';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ProductStorageService } from '../../services/products/ProductStorageService';
 
 const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const { user, loading, error } = useSelector((state: RootState) => state.auth);
   const { theme, colorBlindMode } = useTheme();
@@ -28,6 +29,10 @@ const ProfileScreen = () => {
   const [postalCode, setPostalCode] = useState(user?.zipCode || user?.postalCode || '');
   const [city, setCity] = useState(user?.city || '');
   const [country, setCountry] = useState(user?.country || '');
+  
+  // États pour les statistiques
+  const [scannedCount, setScannedCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -57,6 +62,32 @@ const ProfileScreen = () => {
       setCountry(user.country || '');
     }
   }, [user]);
+  
+  // Charger les compteurs au démarrage
+  useEffect(() => {
+    loadCounters();
+  }, []);
+  
+  // Fonction pour charger les compteurs
+  const loadCounters = async () => {
+    try {
+      const counters = await ProductStorageService.getCounters();
+      setScannedCount(counters.scannedCount);
+      setFavoritesCount(counters.favoritesCount);
+    } catch (error) {
+      console.error('Erreur lors du chargement des compteurs:', error);
+    }
+  };
+  
+  // Navigation vers l'écran des produits scannés
+  const handleScannedProductsPress = () => {
+    navigation.navigate('ScannedProducts');
+  };
+  
+  // Navigation vers l'écran des produits favoris
+  const handleFavoriteProductsPress = () => {
+    navigation.navigate('FavoriteProducts');
+  };
   
   // Animation d'entrée
   useEffect(() => {
@@ -439,53 +470,50 @@ const ProfileScreen = () => {
                 />
                 <Card.Content>
                   <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                      <LinearGradient
-                        colors={theme.cardGradient}
-                        style={styles.statCircle}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Text style={styles.statValue}>0</Text>
-                      </LinearGradient>
-                      <Text style={styles.statLabel}>Produits scannés</Text>
-                    </View>
-                    
-                    <View style={styles.statItem}>
-                      <LinearGradient
-                        colors={theme.cardGradient}
-                        style={styles.statCircle}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Text style={styles.statValue}>0</Text>
-                      </LinearGradient>
-                      <Text style={styles.statLabel}>Favoris</Text>
-                    </View>
-                  </View>
-                  
-                  <Animatable.View 
-                    animation="fadeInUp" 
-                    duration={800} 
-                    delay={1700}
-                  >
                     <TouchableOpacity 
-                      style={styles.historyButton}
-                      onPress={() => navigation.navigate('OrderHistory' as never)}
-                      activeOpacity={0.8}
-                      accessibilityLabel="Voir l'historique des achats"
-                      accessibilityHint="Navigue vers l'écran d'historique des achats"
+                      style={styles.statItem}
+                      onPress={handleScannedProductsPress}
                     >
                       <LinearGradient
-                        colors={theme.buttonGradient}
-                        style={styles.historyButtonGradient}
+                        colors={theme.cardGradient}
+                        style={styles.statCircle}
                         start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                        end={{ x: 1, y: 1 }}
                       >
-                        <Text style={styles.historyButtonText}>Voir l'historique des achats</Text>
+                        <Text style={styles.statValue}>{scannedCount}</Text>
                       </LinearGradient>
+                      <Text style={styles.statLabel}>Produits scannés</Text>
                     </TouchableOpacity>
-                  </Animatable.View>
+                    
+                    <TouchableOpacity 
+                      style={styles.statItem}
+                      onPress={handleFavoriteProductsPress}
+                    >
+                      <LinearGradient
+                        colors={theme.cardGradient}
+                        style={styles.statCircle}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <Text style={styles.statValue}>{favoritesCount}</Text>
+                      </LinearGradient>
+                      <Text style={styles.statLabel}>Favoris</Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.historyButton}
+                    onPress={() => navigation.navigate('OrderHistory')}
+                  >
+                    <LinearGradient
+                      colors={theme.cardGradient}
+                      style={styles.historyButtonGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Text style={styles.historyButtonText}>Voir l'historique des achats</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </Card.Content>
               </Card>
             </Animatable.View>
@@ -682,6 +710,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   statLabel: {
+    marginTop: 8,
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
@@ -692,12 +721,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   historyButtonGradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    padding: 15,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 25,
   },
   historyButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
   },
