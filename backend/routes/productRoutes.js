@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ProductController = require('../controllers/ProductController');
+const ProductController = require('../controllers/productController');
 
 // 中间件
 const authMiddleware = require('../middleware/authMiddleware'); // 验证用户是否登录

@@ -24,7 +24,7 @@ services:
       - DB_HOST=localhost
       - DB_PORT=3306
       - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PASSWORD=root
       - DB_NAME=trinity
       - JWT_SECRET=${JWT_SECRET:-your-secret-key}
     depends_on:
@@ -32,10 +32,24 @@ services:
     networks:
       - app-network
 
+  mobile:
+    build:
+      context: ./trinity-mobile
+      dockerfile: Dockerfile.${NODE_ENV:-dev}
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
   db:
     image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=trinity
     ports:
       - "3307:3306"
