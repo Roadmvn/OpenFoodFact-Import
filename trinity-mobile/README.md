@@ -124,6 +124,43 @@ Si vous rencontrez des problèmes avec le scanner de codes-barres, voici quelque
 2. **Erreurs de détection** : Assurez-vous que le code-barres est bien éclairé et centré dans le cadre.
 3. **Performances lentes** : Réduisez la qualité d'image dans `BarcodeScannerService.getOptimalImageQuality()`.
 
+## Variables d'Environnement
+
+L'application mobile utilise un fichier `.env` pour configurer les connexions à l'API backend :
+
+```bash
+# Configuration de l'API
+API_PORT=3001
+API_HOST=192.168.0.35
+```
+
+Remplacez `API_HOST` par l'adresse IP de votre machine sur votre réseau local.
+
+### Chargement des Variables d'Environnement
+
+Pour charger les variables d'environnement avec Expo :
+
+1. Installez le plugin Expo pour les variables d'environnement :
+```bash
+npx expo install expo-dev-client
+```
+
+2. Ajoutez dans votre fichier `app.config.js` ou `app.json` :
+```javascript
+{
+  "expo": {
+    // ...autres configurations
+    "plugins": [
+      // ...autres plugins
+    ],
+    "extra": {
+      "API_PORT": process.env.API_PORT,
+      "API_HOST": process.env.API_HOST
+    }
+  }
+}
+```
+
 ## Développement
 
 ### Prérequis

@@ -1,5 +1,12 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models'); // 确保模型使用 Models 对象导入
+const { User } = require('../models'); 
+const dotenv = require('dotenv');
+
+// Charger les variables d'environnement
+dotenv.config();
+
+// JWT SECRET KEY depuis les variables d'environnement
+const JWT_SECRET_KEY = process.env.JWT_SECRET;
 
 module.exports = async (req, res, next) => {
     try {
@@ -30,17 +37,17 @@ module.exports = async (req, res, next) => {
         }
 
         // 验证 Token
-        const decoded = jwt.verify(token, 'c7fOuEeCk2ijM5aMLue'); // 替换为您实际的 JWT 密钥
+        const decoded = jwt.verify(token, JWT_SECRET_KEY); 
 
         // 可选：从数据库中查询用户，确保 Token 对应的用户仍有效
-        const user = await User.findByPk(decoded.id); // 确保 Token 与合法的用户匹配
+        const user = await User.findByPk(decoded.id); 
         if (!user) {
             return res.status(401).json({ message: 'L\'utilisateur n\'existe pas ou a été supprimé' });
         }
 
         // 将 user 信息保存到 req 中，供后续处理
         req.user = user;
-        next(); // 放行到下一个控制器
+        next(); 
     } catch (error) {
         console.error('Auth Middleware Error:', error);
         return res.status(401).json({ message: 'Jeton invalide, veuillez vous reconnecter' });

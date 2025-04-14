@@ -1,2 +1,32 @@
-node_modules/   
-.env    
+# Environnement
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+
+# Fichiers de build
+/dist
+/build
+
+# Fichiers de test
+coverage/
+.nyc_output
+
+# Fichiers temporaires
+tmp/
+temp/
+.cache/
+
+# Base de données
+*.sqlite
+*.sqlite3

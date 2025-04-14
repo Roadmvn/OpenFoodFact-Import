@@ -1,16 +1,25 @@
 // paypalClient.js
 const checkoutNodeJssdk = require('@paypal/checkout-server-sdk');
+const dotenv = require('dotenv');
 
-// 环境配置
+// Charger les variables d'environnement
+dotenv.config();
+
+// Configuration de l'environnement
 function environment() {
-    const clientId = "AX2YAQ3gXr-WidNvgMevZM5ysidZRocYDSF2sxkp5FXjhv8gcQtLpJ7A9YR7PG58N0NRJcEUXgVLrTSb";
-    const clientSecret = "EI3zF93pCbskJJYeKvHyqQG9Qch1VTNxj9lCfLQJzWfveYDLu40ASF15uaJZSXw3F2DzCSN3x-_QaZBJ";
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+        console.error("Les identifiants PayPal n'ont pas été configurés dans le fichier .env");
+        throw new Error("Configuration PayPal manquante");
+    }
 
-    // Sandbox 环境 (开发测试用)
+    // Environnement Sandbox (développement)
     return new checkoutNodeJssdk.core.SandboxEnvironment(clientId, clientSecret);
 }
 
-// PayPal 客户端实例
+// Instance du client PayPal
 function client() {
     return new checkoutNodeJssdk.core.PayPalHttpClient(environment());
 }

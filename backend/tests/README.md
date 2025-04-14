@@ -3,20 +3,17 @@
 ## Configuration
 
 ### Environnement de test
-Les tests utilisent une base de données dédiée pour éviter d'affecter les données de développement ou de production.
+Les tests utilisent une base de données dédiée pour éviter d'affecter les données de développement ou de production. Les configurations sont définies dans le fichier `.env` du projet.
 
-1. Copiez le fichier d'environnement de test:
-```bash
-cp .env.example.test .env.test
-```
-
-2. Modifiez les variables dans `.env.test` selon votre configuration:
+1. Vérifiez que les variables d'environnement de test sont correctement configurées dans `.env`:
 ```
 DB_USERNAME=root
 DB_PASSWORD=root
 DB_DATABASE=trinity_test
 DB_HOST=127.0.0.1
 DB_DIALECT=mysql
+NODE_ENV=test
+JWT_SECRET_KEY=test_secret_key_for_testing
 ```
 
 ### Structure des tests
@@ -187,7 +184,7 @@ npm run setup:testdb
 # S'assurer que le serveur MySQL est en cours d'exécution
 # Pour Windows : vérifiez dans les services qu'il est actif
 
-# Vérifier les informations d'identification dans .env.test
+# Vérifier les informations d'identification dans .env
 ```
 
 ### 2. Erreurs de mock

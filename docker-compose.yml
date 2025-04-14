@@ -7,6 +7,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - API_URL=${API_URL:-http://backend:8001}
       - HOST=0.0.0.0
     depends_on:
       - backend
@@ -18,15 +19,22 @@ services:
       context: ./backend
       dockerfile: Dockerfile.${NODE_ENV:-dev}
     ports:
-      - "${BACKEND_PORT:-8001}:8001"
+      - "${BACKEND_PORT:-3001}:3001"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - DB_HOST=localhost
+      - DB_HOST=db
       - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=trinity
-      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+      - DB_USERNAME=${DB_DEV_USERNAME:-root}
+      - DB_PASSWORD=${DB_DEV_PASSWORD:-root}
+      - DB_DATABASE=${DB_DEV_DATABASE:-trinity}
+      - DB_DIALECT=mysql
+      - JWT_SECRET=${JWT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       - db
     networks:
@@ -35,8 +43,10 @@ services:
   db:
     image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=trinity
+      - MYSQL_ROOT_PASSWORD=${DB_DEV_PASSWORD:-root}
+      - MYSQL_DATABASE=${DB_DEV_DATABASE:-trinity}
+      - MYSQL_USER=${DB_DEV_USERNAME:-root}
+      - MYSQL_PASSWORD=${DB_DEV_PASSWORD:-root}
     ports:
       - "3307:3306"
     volumes:

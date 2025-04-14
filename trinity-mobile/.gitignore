@@ -10,6 +10,8 @@ web-build/
 
 # env files
 .env
+.env.*
+!.env.example
 
 # Native
 *.orig.*
@@ -30,9 +32,6 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
-
-# local env files
-.env*.local
 
 # typescript
 *.tsbuildinfo

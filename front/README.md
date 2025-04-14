@@ -20,6 +20,17 @@ yarn install
 bun install
 ```
 
+## Variables d'Environnement
+
+Il est nécessaire de configurer les variables d'environnement dans le fichier `.env` à la racine du projet front :
+
+```bash
+# Configuration du serveur front
+PORT=3000
+NODE_ENV=development
+API_URL=http://localhost:3001
+```
+
 ## Development Server
 
 Start the development server on `http://localhost:3000`:

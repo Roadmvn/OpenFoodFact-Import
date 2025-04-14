@@ -1,10 +1,39 @@
 const mysql = require("mysql2");
+const dotenv = require("dotenv");
+
+// Charger les variables d'environnement
+dotenv.config();
+
+// Utiliser les variables d'environnement appropriées selon l'environnement
+const env = process.env.NODE_ENV || "development";
+let dbConfig;
+
+if (env === "test") {
+  dbConfig = {
+    host: process.env.DB_HOST, 
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+  };
+} else if (env === "production") {
+  dbConfig = {
+    host: process.env.DB_PROD_HOST,
+    user: process.env.DB_PROD_USERNAME,
+    password: process.env.DB_PROD_PASSWORD,
+    database: process.env.DB_PROD_DATABASE,
+  };
+} else {
+  // Environnement de développement par défaut
+  dbConfig = {
+    host: process.env.DB_DEV_HOST,
+    user: process.env.DB_DEV_USERNAME,
+    password: process.env.DB_DEV_PASSWORD,
+    database: process.env.DB_DEV_DATABASE,
+  };
+}
 
 const pool = mysql.createPool({
-    host: "localhost", // 数据库主机
-    user: "pc",      // 数据库用户名
-    password: "Jiojio000608.", // 数据库密码
-    database: "trinity",  // 数据库名称
+    ...dbConfig,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,

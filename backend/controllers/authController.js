@@ -3,9 +3,13 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const dotenv = require('dotenv');
 
-// JWT SECRET KEY
-const JWT_SECRET_KEY = 'c7fOuEeCk2ijM5aMLue'; // 请将此密钥存储在安全的环境变量中
+// Charger les variables d'environnement
+dotenv.config();
+
+// JWT SECRET KEY depuis les variables d'environnement
+const JWT_SECRET_KEY = process.env.JWT_SECRET;
 
 // 用户注册逻辑
 const register = async (req, res) => {
@@ -132,12 +136,14 @@ const isAuthenticated = (req, res, next) => {
 passport.use(
     new GoogleStrategy(
         {
-            clientID: '850975209900-4e76gfd8s1cvhpjbdvdllcolptg0kf29.apps.googleusercontent.com',
-            clientSecret: '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',
-            callbackURL: 'http://localhost:3001/auth/google/callback',
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: '/api/auth/google/callback',
+            scope: ['profile', 'email']
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
+                console.log('Google profile:', profile);
                 // 用 Google 返回的 email 查询用户
                 const email = profile.emails[0].value;
                 const googleId = profile.id;
@@ -187,7 +193,7 @@ const googleLogin = (req, res, next) => {
         // 生成 JWT
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
-            'c7fOuEeCk2ijM5aMLue',
+            JWT_SECRET_KEY,
             { expiresIn: '2h' }
         );
 

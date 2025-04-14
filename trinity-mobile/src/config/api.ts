@@ -1,19 +1,16 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Récupérer le port API depuis les variables d'environnement
+// Récupérer le port et l'hôte API depuis les variables d'environnement
 const API_PORT = process.env.API_PORT || Constants.expoConfig?.extra?.API_PORT || 3001;
-
-// Adresse IP de votre PC lorsqu'il est connecté au partage de connexion
-const HOTSPOT_IP = '192.168.0.35'; // Adresse IP actuelle de votre PC sur le partage de connexion
+const API_HOST = process.env.API_HOST || Constants.expoConfig?.extra?.API_HOST || '127.0.0.1';
 
 // L'URL de base pour l'API
 const getBaseUrl = () => {
-  // Pour le développement, utiliser l'adresse IP du partage de connexion
-  return `http://${HOTSPOT_IP}:${API_PORT}`;
+  return `http://${API_HOST}:${API_PORT}`;
 };
 
 export const API_URL = getBaseUrl();
 
 // Pour le débogage
-console.log(`API_URL configurée: ${API_URL} (port: ${API_PORT})`);
+console.log(`API_URL configurée: ${API_URL} (port: ${API_PORT}, hôte: ${API_HOST})`);

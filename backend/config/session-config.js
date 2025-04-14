@@ -1,11 +1,11 @@
 const session = require('express-session');
 
 module.exports = session({
-    secret: 'JMsgmBe7nbZqw59OPO',
+    secret: process.env.SESSION_SECRET || 'default_session_secret',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // 开发环境下不使用 HTTPS
+        secure: process.env.NODE_ENV === 'production', // Utiliser HTTPS en production
         httpOnly: true,
     },
 });
